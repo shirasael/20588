@@ -83,9 +83,14 @@ void my_callback(u_char *useless,const struct pcap_pkthdr* pkthdr,const u_char* 
 		printf("IP\n");
 	} else  if (ntohs(eth_header->ether_type) == ETHERTYPE_ARP) {
 		printf("ARP\n");
+		return;
 	} else  if (ntohs(eth_header->ether_type) == ETHERTYPE_REVARP) {
 		printf("Reverse ARP\n");
+		return;
 	}
+
+	printf("Packet InfoL\n");
+	
 }
 
 void snifferLoop(int argc, char **argv) {
