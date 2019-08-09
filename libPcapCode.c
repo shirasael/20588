@@ -31,7 +31,11 @@ pcap_t* openGoLiveAndSetFilter(char* filter) {
 	
 	/* ask pcap for the network address and mask of the device */
 	pcap_lookupnet(dev,&netp,&maskp,errbuf);
+	printf("here!");
+	fflush(stdout);
 	descr = pcap_open_live(dev,BUFSIZ, 0, -1,errbuf);
+	printf("YOOOOOO");
+	fflush(stdout);
 
 	/* BUFSIZ is max packet size to capture, 0 is promiscous, -1 means don’t wait for read to time out. */
 	if(descr == NULL) {
@@ -68,6 +72,7 @@ void sniffOnePacket(int argc, char **argv) {
 }
 
 void my_callback(u_char *useless,const struct pcap_pkthdr* pkthdr,const u_char* packet) { 
+	printf("handling packet!");
 	struct ether_header *eth_header;
 	/* The packet is larger than the ether_header struct,
 	but we just want to look at the first part of the packet
@@ -85,6 +90,7 @@ void my_callback(u_char *useless,const struct pcap_pkthdr* pkthdr,const u_char* 
 	} else  if (ntohs(eth_header->ether_type) == ETHERTYPE_REVARP) {
 		printf("Reverse ARP\n");
 	}
+	fflush(stdout);
 }
 
 void snifferLoop(int argc, char **argv) {
@@ -96,5 +102,7 @@ void snifferLoop(int argc, char **argv) {
 }
 
 void main(int argc, char **argv) {
+	setbuf(stdout, NULL);
+	setbuf(stderr, NULL);
 	snifferLoop(argc, argv);
 }
