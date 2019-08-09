@@ -16,6 +16,11 @@ Approximate round trip times in milli-seconds:
     Minimum = {min}ms, Maximum = {max}ms, Average = {avg}ms
 """
 
+SUM_DATA_NO_REPLY = """
+Ping statistics for {dst}:
+    Packets: Sent = {snt}, Received = {res}, Lost = {lost} ({lostp}% loss),
+"""
+
 class Counter:
     def __init__(self, count, infinite):
         self.count = count
@@ -78,7 +83,7 @@ class IcmpPacket:
                 reply = sr1(pkt, verbose=0, timeout=TIMEOUT)
                 if reply is None:
                     if datetime.now().timestamp() - sending_time < TIMEOUT:
-                        sent -= 1   
+                        sent -= 1
                         raise KeyboardInterrupt
                     print('Request timed out.')
                 elif reply.type == 0:
@@ -91,14 +96,22 @@ class IcmpPacket:
                      ttl=reply.ttl))
                     res += 1
                     round_times.append(time)
+                elif reply.type == 11:
+                    print("Got TTL exceeded")
+
         except KeyboardInterrupt:
             pass
 
-        print(SUM_DATA.format(dst=self.dst, snt=sent, res=res, lost=sent-res,
-            lostp=(sent-res)/sent,
-            min=min(round_times),
-            max=max(round_times),
-            avg=sum(round_times)/len(round_times)))
+        if round_times:
+            print(SUM_DATA.format(dst=self.dst, snt=sent, res=res, lost=sent-res,
+                lostp=(sent-res)/sent*100,
+                min=min(round_times),
+                max=max(round_times),
+                avg=sum(round_times)/len(round_times)))
+        else:
+            print(SUM_DATA_NO_REPLY.format(dst=self.dst, snt=sent, res=res, lost=sent-res,
+                lostp=(sent-res)/sent*100))
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
