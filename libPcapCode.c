@@ -24,22 +24,18 @@ pcap_t* openGoLiveAndSetFilter(char* filter) {
 	/* ask pcap to find a valid device to sniff */
 	dev = pcap_lookupdev(errbuf);
 	if(dev == NULL) {
-		printf("%sn",errbuf);
+		printf("%s\n",errbuf);
 		exit(1);
 	}
-	printf("DEV: %sn",dev);
+	printf("DEV: %s\n",dev);
 	
 	/* ask pcap for the network address and mask of the device */
 	pcap_lookupnet(dev,&netp,&maskp,errbuf);
-	printf("here!");
-	fflush(stdout);
 	descr = pcap_open_live(dev,BUFSIZ, 0, -1,errbuf);
-	printf("YOOOOOO");
-	fflush(stdout);
 
 	/* BUFSIZ is max packet size to capture, 0 is promiscous, -1 means don’t wait for read to time out. */
 	if(descr == NULL) {
-		printf("pcap_open_live(): %sn",errbuf);
+		printf("pcap_open_live(): %s\n",errbuf);
 		exit(1);
 	}
 
@@ -65,14 +61,14 @@ void sniffOnePacket(int argc, char **argv) {
 	packet = pcap_next(descr, &hdr);
 
 	if (packet == NULL) {
-		printf("It got away!n");
+		printf("It got away!\n");
 	} else {
-		printf("one lonely packet.n");
+		printf("one lonely packet.\n");
 	}
 }
 
 void my_callback(u_char *useless,const struct pcap_pkthdr* pkthdr,const u_char* packet) { 
-	printf("handling packet!");
+	printf("Handling packet of type ");
 	struct ether_header *eth_header;
 	/* The packet is larger than the ether_header struct,
 	but we just want to look at the first part of the packet
@@ -90,14 +86,16 @@ void my_callback(u_char *useless,const struct pcap_pkthdr* pkthdr,const u_char* 
 	} else  if (ntohs(eth_header->ether_type) == ETHERTYPE_REVARP) {
 		printf("Reverse ARP\n");
 	}
-	fflush(stdout);
 }
 
 void snifferLoop(int argc, char **argv) {
 	pcap_t* descr; /* pointer to device descriptor */
-
-	descr = openGoLiveAndSetFilter(NULL);
-
+	char* filter = NULL;
+	if (argc > 1) {
+		filter = argv[1];
+		printf("Filter: %s\n", filter);
+	}
+	descr = openGoLiveAndSetFilter(filter);
 	pcap_loop(descr,-1,my_callback,NULL);
 }
 
