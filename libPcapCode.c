@@ -68,7 +68,23 @@ void sniffOnePacket(int argc, char **argv) {
 }
 
 void my_callback(u_char *useless,const struct pcap_pkthdr* pkthdr,const u_char* packet) { 
-	
+	struct ether_header *eth_header;
+	/* The packet is larger than the ether_header struct,
+	but we just want to look at the first part of the packet
+	that contains the header. We force the compiler
+	to treat the pointer to the packet as just a pointer
+	to the ether_header. The data payload of the packet comes
+	after the headers. Different packet types have different header
+	lengths though, but the ethernet header is always the same (14 bytes) */
+	eth_header = (struct ether_header *) packet;
+
+	if (ntohs(eth_header->ether_type) == ETHERTYPE_IP) {
+		printf("IP\n");
+	} else  if (ntohs(eth_header->ether_type) == ETHERTYPE_ARP) {
+		printf("ARP\n");
+	} else  if (ntohs(eth_header->ether_type) == ETHERTYPE_REVARP) {
+		printf("Reverse ARP\n");
+	}
 }
 
 void snifferLoop(int argc, char **argv) {
