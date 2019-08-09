@@ -68,7 +68,7 @@ void sniff_one_packet(int argc, char **argv) {
 	}
 }
 
-void my_callback(u_char*, const struct pcap_pkthdr* pkthdr,const u_char* packet) { 
+void my_callback(u_char* unused, const struct pcap_pkthdr* pkthdr,const u_char* packet) { 
 	printf("Handling packet of type ");
 	struct ether_header *eth_header;
 	/* The packet is larger than the ether_header struct,
@@ -90,7 +90,7 @@ void my_callback(u_char*, const struct pcap_pkthdr* pkthdr,const u_char* packet)
 	}
 }
 
-void print_packet_info(const struct pcap_pkthdr* pkthdr, const u_char* packet) {
+void print_packet_info(const struct pcap_pkthdr* header, const u_char* packet) {
 	/* First, lets make sure we have an IP packet */
 	struct ether_header *eth_header;
 	eth_header = (struct ether_header *) packet;
