@@ -2,6 +2,7 @@ import socket
 import sys
 from contextlib import contextmanager
 import struct
+from scapy.layers.inet import IP
 
 # the public network interface
 HOST = socket.gethostbyname(socket.gethostname())
@@ -11,12 +12,8 @@ HOST = socket.gethostbyname(socket.gethostname())
 def open_raw_socket(host=HOST, port=0):
     # Create a raw socket and bind it to the public interface
     s = socket.socket(socket.AF_INET,       # Socket family
-                      socket.SOCK_RAW,      # Socket type
-                      socket.IPPROTO_IP)    # Protocol
+                      socket.SOCK_RAW)      # Socket type
     s.bind((host, port))
-
-    # Include IP headers
-    s.setsockopt(socket.IPPROTO_IP, socket.IP_HDRINCL, 1)
 
     # Receive all packages (promisc)
     s.ioctl(socket.SIO_RCVALL, socket.RCVALL_ON)
@@ -76,10 +73,9 @@ def build_daatgram_to_send(data, src, dst):
 
 
 def raw_send(data, dst):
-    port = 12345
-    send_data = build_daatgram_to_send(data, (HOST, port), dst)
-    with open_raw_socket(HOST, port) as conn:
-        conn.sendto(send_data, dst)
+    send_data = build_daatgram_to_send(data, (HOST, 0), dst)
+    with open_raw_socket() as conn:
+            conn.sendto(send_data, dst)
 
 
 def raw_recv():
@@ -87,8 +83,23 @@ def raw_recv():
         return conn.recvfrom(65565)
 
 
+def sniff():
+    with open_raw_socket() as conn:
+        # Include IP headers
+        conn.setsockopt(socket.IPPROTO_IP, socket.IP_HDRINCL, 1)
+        while True:
+            raw = conn.recvfrom(65565)
+            ip = IP(str(raw))
+            print(ip.show())
+
+
 def main():
-    USAGE = "Usage: \n\tpython raw.py send <data> <dst_host> <dst_port>\nOr\n\tpython raw.py recv"
+    USAGE = """"Usage:
+        python raw.py send <data> <dst_host> <dst_port>
+    Or
+        python raw.py recv
+    Or
+        python raw.py sniff"""
     if len(sys.argv) < 2:
         print(USAGE)
         return
@@ -102,6 +113,9 @@ def main():
         print("Sending {} to {}:{}".format(sys.argv[2], sys.argv[3], sys.argv[4]))
         raw_send(sys.argv[2], (sys.argv[3], int(sys.argv[4])))
         print("Sent!")
+    elif sys.argv[1].lower() == 'sniff':
+        print("Sniffing!")
+        sniff()
     else:
         print(USAGE)
 
