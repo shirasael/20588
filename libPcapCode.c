@@ -11,11 +11,6 @@
 #define ETHERTYPE_IP 0x0800 /* IP */
 #define ETHERTYPE_ARP 0x0806 /* Address resolution */ 
 
-struct ether_header {
-	u_int8_t ether_dhost[ETH_ALEN]; /* 6 bytes destination */
-	u_int8_t ether_shost[ETH_ALEN]; /* 6 bytes source addr */
-	u_int16_t ether_type; /* 2 bytes ID type */
-} __attribute__ ((__packed__));
 
 pcap_t* openGoLiveAndSetFilter(char* filter) {
 	char *dev; /* name of the device to use */
@@ -59,27 +54,31 @@ pcap_t* openGoLiveAndSetFilter(char* filter) {
 void sniffOnePacket(int argc, char **argv) {
 	struct pcap_pkthdr hdr; /* struct: packet header */
 	pcap_t* descr; /* pointer to device descriptor */
+	const u_char *packet; /* pointer to packet */
 
-	descr = openGoLiveAndSetFilter();
+	descr = openGoLiveAndSetFilter(NULL);
 
 	packet = pcap_next(descr, &hdr);
 
 	if (packet == NULL) {
 		printf("It got away!n");
 	} else {
-		printf(“one lonely packet.n”);
+		printf("one lonely packet.n");
 	}
 }
 
 void my_callback(u_char *useless,const struct pcap_pkthdr* pkthdr,const u_char* packet) { 
-//do stuff here with packet 
+	
 }
 
 void snifferLoop(int argc, char **argv) {
 	pcap_t* descr; /* pointer to device descriptor */
 
-	descr = openGoLiveAndSetFilter();
+	descr = openGoLiveAndSetFilter(NULL);
 
 	pcap_loop(descr,-1,my_callback,NULL);
 }
 
+void main(int argc, char **argv) {
+	snifferLoop(argc, argv);
+}
