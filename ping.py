@@ -70,7 +70,7 @@ class IcmpPacket:
         try:
             pkt = self.createPacket()
         except socket.gaierror:
-            print("Ping request could not find host ynet.com. Please check the name and try again.")
+            print("Ping request could not find host {}. Please check the name and try again.".format(self.dst))
             exit()
 
         print('Pinging {} with {} bytes of data:'.format(self.getIpFromIpPkt(pkt), len(self.data)))

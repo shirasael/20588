@@ -1,5 +1,6 @@
 import sys
 from scapy.all import *
+import argparse
 
 USAGE = """Usage: tracerout.py hostname/ip <protocol>
     protocol can be one of - udp/icmp else use icmp"""
@@ -43,11 +44,12 @@ def tracert(dst, protocol):
             print("%d hops away: " % i , reply.src)
 
 if __name__ == "__main__":
-    if len(sys.argv) not in (2,3):
-        print(USAGE)
-        exit()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('host', type=str, nargs='?',
+                       help='target name/ip')
+    parser.add_argument('-p','--proto', type=str, default=ICMP_PROTO, required=False,
+                       help='Protocol for traceroute icmp/udp. default is "{}"'.format(ICMP_PROTO))
 
-    if len(sys.argv) == 2:
-        sys.argv.append('')
+    args = parser.parse_args()
 
-    tracert(sys.argv[1], sys.argv[2])
+    tracert(args.host, args.proto)
