@@ -49,13 +49,26 @@ class IcmpPacket:
         self.icmp_seq += 1
         return IP(dst=self.dst, id=self.ip_id, ttl=self.ttl) / ICMP(seq=self.icmp_seq) / self.data
 
+    def getIpFromIpPkt(self, pkt):
+        assert type(pkt) == scapy.layers.inet.IP, "getIpFromIpPkt waits for IP packet"
+        ip = ''
+        for i in raw(pkt)[16:20]:
+            ip += str(i) + '.'
+        return ip[:-1]
+
     def ping(self):
         res = 0
         sent = 0
         round_times = []
         counter = Counter(self.count, self.infinite)
 
-        print('Pinging {} with {} bytes of data:'.format(self.dst, len(self.data)))
+        try:
+            pkt = self.createPacket()
+        except socket.gaierror:
+            print("Ping request could not find host ynet.com. Please check the name and try again.")
+            exit()
+
+        print('Pinging {} with {} bytes of data:'.format(self.getIpFromIpPkt(pkt), len(self.data)))
         try:
             while not counter.stop():
                 pkt = self.createPacket()
@@ -65,7 +78,7 @@ class IcmpPacket:
                 reply = sr1(pkt, verbose=0, timeout=TIMEOUT)
                 if reply is None:
                     if datetime.now().timestamp() - sending_time < TIMEOUT:
-                        sent -= 1
+                        sent -= 1   
                         raise KeyboardInterrupt
                     print('Request timed out.')
                 elif reply.type == 0:
