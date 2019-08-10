@@ -23,8 +23,11 @@ def open_raw_socket(host=HOST, port=socket.SOCK_RAW):
     s.ioctl(socket.SIO_RCVALL, socket.RCVALL_OFF)
 
 
-def raw_send(data, dst_host, dst_port, src_host=HOST, src_port=socket.SOCK_RAW):
-    send_packet = IP(src=src_host, dst=dst_host)/UDP(sport=src_port, dport=dst_port)/Raw(data)
+def raw_send(data, dst_host, dst_port,
+             src_host=HOST, src_port=socket.SOCK_RAW):
+    send_packet = IP(src=src_host, dst=dst_host)/               \
+                  UDP(sport=src_port, dport=dst_port)/          \
+                  Raw(data)
     with open_raw_socket() as conn:
         # Remove IP headers (we are adding them ourselves)
         conn.setsockopt(socket.IPPROTO_IP, socket.IP_HDRINCL, 1)
@@ -38,8 +41,6 @@ def raw_recv():
 
 def sniff():
     with open_raw_socket() as conn:
-        # Include IP headers
-        conn.setsockopt(socket.IPPROTO_IP, socket.IP_HDRINCL, 1)
         while True:
             raw = conn.recvfrom(65565)
             ip = IP(str(raw))
