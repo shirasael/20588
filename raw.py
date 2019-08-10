@@ -11,8 +11,7 @@ HOST = socket.gethostbyname(socket.gethostname())
 def open_raw_socket(host=HOST, port=socket.SOCK_RAW):
     # Create a raw socket and bind it to the public interface
     s = socket.socket(socket.AF_INET,       # Socket family
-                      socket.SOCK_RAW,      # Socket type
-                      socket.IPPROTO_RAW)   # protocol
+                      socket.SOCK_RAW)     # Socket type
     s.bind((host, port))
 
     # Receive all packages (promisc)
