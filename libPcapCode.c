@@ -8,6 +8,7 @@
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
 #include <string.h>
+#include "packetPrinter.h"
 
 #define ETHERTYPE_IP 0x0800 /* IP */
 #define ETHERTYPE_ARP 0x0806 /* Address resolution */ 
@@ -202,7 +203,7 @@ void sniffer_loop(int argc, char **argv) {
 		printf("Using filter: %s\n", filter);
 	}
 	descr = open_go_live_and_set_filter(filter);
-	pcap_loop(descr,-1,my_callback,NULL);
+	pcap_loop(descr,-1,got_packet,NULL);
 }
 
 void main(int argc, char **argv) {
