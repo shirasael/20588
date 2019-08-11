@@ -92,7 +92,8 @@ void sniff_one_packet(int argc, char **argv) {
 	if (packet == NULL) {
 		printf("It got away!\n");
 	} else {
-		printf("one lonely packet.\n");
+		printf("One lonely packet.\n\n");
+		got_packet(NULL, &hdr, packet);
 	}
 }
 
