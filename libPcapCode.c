@@ -13,6 +13,28 @@
 
 void print_packet_info(const struct pcap_pkthdr* pkthdr, const u_char* packet);
 
+void print_device_info(const bpf_u_int32& ip_raw, const bpf_u_int32& subnet_mask_raw) {
+	struct in_addr address;
+	address.s_addr = *ip_raw;
+	strcpy(ip, inet_ntoa(address));
+	if (ip == NULL) {
+		perror("inet_ntoa"); /* print error */
+		return 1;
+	}
+	printf("IP address: %s\n", ip);
+
+	/* Get subnet mask in human readable form */
+	address.s_addr = *subnet_mask_raw;
+	strcpy(subnet_mask, inet_ntoa(address));
+	if (subnet_mask == NULL) {
+		perror("inet_ntoa");
+		return 1;
+	}
+
+	printf("IP address: %s\n", ip);
+	printf("Subnet mask: %s\n", subnet_mask);
+}
+
 pcap_t* open_go_live_and_set_filter(char* filter) {
 	char *dev; /* name of the device to use */
 	pcap_t* descr; /* pointer to device descriptor */
@@ -32,6 +54,8 @@ pcap_t* open_go_live_and_set_filter(char* filter) {
 	
 	/* ask pcap for the network address and mask of the device */
 	pcap_lookupnet(dev,&netp,&maskp,errbuf);
+	print_device_info(netp, masp);
+
 	descr = pcap_open_live(dev,BUFSIZ, 0, -1,errbuf);
 
 	/* BUFSIZ is max packet size to capture, 0 is promiscous, -1 means don’t wait for read to time out. */
