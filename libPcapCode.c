@@ -106,19 +106,19 @@ void main(int argc, char **argv) {
 	setbuf(stderr, NULL);
 	char* filter = NULL;
 
-	if (args < 2) {
-		printf("USAGE: libpcap_demo [sniff|fetch-one] [filter]");
+	if (argc < 2) {
+		printf("USAGE: libpcap_demo [sniff|fetch-one] [filter]\n");
 		return;
 	} else if (argc > 2) {
 		filter = argv[2];
 		printf("Using filter: %s\n", filter);
 	}
 	
-	if (strcmp(argv[1], "sniff")) {
-		printf("Sniffing!");
+	if (strcmp(argv[1], "sniff") == 0) {
+		printf("Sniffing!\n");
 		sniffer_loop(filter);
-	} else if (strcmp(argv[1], "fetch-one")) {
-		printef("Fetching one packet...");
+	} else if (strcmp(argv[1], "fetch-one") == 0) {
+		printf("Fetching one packet...\n");
 		sniff_one_packet(filter);
 	}
 }
