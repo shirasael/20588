@@ -37,6 +37,28 @@ void print_device_info(const bpf_u_int32* ip_raw, const bpf_u_int32* subnet_mask
 	printf("Subnet mask: %s\n\n", subnet_mask);
 }
 
+void device_info() {
+	char *dev; /* name of the device to use */
+	pcap_t* descr; /* pointer to device descriptor */
+	const u_char *packet; /* pointer to packet */
+	bpf_u_int32 maskp; /* subnet mask */
+	bpf_u_int32 netp; /* ip */
+	char errbuf[PCAP_ERRBUF_SIZE];
+	struct bpf_program fp;
+
+	/* ask pcap to find a valid device to sniff */
+	dev = pcap_lookupdev(errbuf);
+	if(dev == NULL) {
+		printf("%s\n",errbuf);
+		exit(1);
+	}
+	printf("DEV: %s\n",dev);
+	
+	/* ask pcap for the network address and mask of the device */
+	pcap_lookupnet(dev,&netp,&maskp,errbuf);
+	print_device_info(&netp, &maskp);
+}
+
 pcap_t* open_go_live_and_set_filter(char* filter) {
 	char *dev; /* name of the device to use */
 	pcap_t* descr; /* pointer to device descriptor */
@@ -107,7 +129,7 @@ void main(int argc, char **argv) {
 	char* filter = NULL;
 
 	if (argc < 2) {
-		printf("USAGE: libpcap_demo [sniff|fetch-one] [filter]\n");
+		printf("USAGE: libpcap_demo [sniff|fetch-one|dev-info] [filter]\n");
 		return;
 	} else if (argc > 2) {
 		filter = argv[2];
@@ -120,5 +142,10 @@ void main(int argc, char **argv) {
 	} else if (strcmp(argv[1], "fetch-one") == 0) {
 		printf("Fetching one packet...\n");
 		sniff_one_packet(filter);
+	} else if (strcmp(argv[1], "dev-info") == 0) {
+		printf("Showing device info\n");
+		device_info();
+	} else {
+		printf("USAGE: libpcap_demo [sniff|fetch-one|dev-info] [filter]\n");
 	}
 }
