@@ -13,8 +13,6 @@
 #define ETHERTYPE_IP 0x0800 /* IP */
 #define ETHERTYPE_ARP 0x0806 /* Address resolution */ 
 
-void print_packet_info(const struct pcap_pkthdr* pkthdr, const u_char* packet);
-
 void print_device_info(const bpf_u_int32* ip_raw, const bpf_u_int32* subnet_mask_raw) {
 	char ip[18];
 	char subnet_mask[18];
@@ -80,12 +78,12 @@ pcap_t* open_go_live_and_set_filter(char* filter) {
 	return descr;
 }
 
-void sniff_one_packet(int argc, char **argv) {
+void sniff_one_packet(char* filter) {
 	struct pcap_pkthdr hdr; /* struct: packet header */
 	pcap_t* descr; /* pointer to device descriptor */
 	const u_char *packet; /* pointer to packet */
 
-	descr = open_go_live_and_set_filter(NULL);
+	descr = open_go_live_and_set_filter(filter);
 
 	packet = pcap_next(descr, &hdr);
 
@@ -97,112 +95,8 @@ void sniff_one_packet(int argc, char **argv) {
 	}
 }
 
-void my_callback(u_char* unused, const struct pcap_pkthdr* pkthdr,const u_char* packet) { 
-	printf("Handling packet of type ");
-	struct ether_header *eth_header;
-	/* The packet is larger than the ether_header struct,
-	but we just want to look at the first part of the packet
-	that contains the header. We force the compiler
-	to treat the pointer to the packet as just a pointer
-	to the ether_header. The data payload of the packet comes
-	after the headers. Different packet types have different header
-	lengths though, but the ethernet header is always the same (14 bytes) */
-	eth_header = (struct ether_header *) packet;
-
-	if (ntohs(eth_header->ether_type) == ETHERTYPE_IP) {
-		printf("IP. Let's look into it...\n");
-		print_packet_info(pkthdr, packet);
-	} else  if (ntohs(eth_header->ether_type) == ETHERTYPE_ARP) {
-		printf("ARP\n");
-	} else  if (ntohs(eth_header->ether_type) == ETHERTYPE_REVARP) {
-		printf("Reverse ARP\n");
-	}
-}
-
-void print_packet_info(const struct pcap_pkthdr* header, const u_char* packet) {
-	/* First, lets make sure we have an IP packet */
-	struct ether_header *eth_header;
-	eth_header = (struct ether_header *) packet;
-	if (ntohs(eth_header->ether_type) != ETHERTYPE_IP) {
-		printf("Not an IP packet. Skipping...\n\n");
-		return;
-	}
-
-	/* The total packet length, including all headers
-	and the data payload is stored in
-	header->len and header->caplen. Caplen is
-	the amount actually available, and len is the
-	total packet length even if it is larger
-	than what we currently have captured. If the snapshot
-	length set with pcap_open_live() is too small, you may
-	not have the whole packet. */
-	printf("Total packet available: %d bytes\n", header->caplen);
-	printf("Expected packet size: %d bytes\n", header->len);
-
-	/* Pointers to start point of various headers */
-	const u_char *ip_header;
-	const u_char *tcp_header;
-	const u_char *payload;
-
-	/* Header lengths in bytes */
-	int ethernet_header_length = 14; /* Doesn't change */
-	int ip_header_length;
-	int tcp_header_length;
-	int payload_length;
-
-	/* Find start of IP header */
-	ip_header = packet + ethernet_header_length;
-	/* The second-half of the first byte in ip_header
-	contains the IP header length (IHL). */
-	ip_header_length = ((*ip_header) & 0x0F);
-	/* The IHL is number of 32-bit segments. Multiply
-	by four to get a byte count for pointer arithmetic */
-	ip_header_length = ip_header_length * 4;
-	printf("IP header length (IHL) in bytes: %d\n", ip_header_length);
-
-	/* Now that we know where the IP header is, we can
-	inspect the IP header for a protocol number to
-	make sure it is TCP before going any further.
-	Protocol is always the 10th byte of the IP header */
-	u_char protocol = *(ip_header + 9);
-	if (protocol != IPPROTO_TCP) {
-		printf("Not a TCP packet. Skipping...\n\n");
-		return;
-	}
-
-	/* Add the ethernet and ip header length to the start of the packet
-	to find the beginning of the TCP header */
-	tcp_header = packet + ethernet_header_length + ip_header_length;
-	/* TCP header length is stored in the first half
-	of the 12th byte in the TCP header. Because we only want
-	the value of the top half of the byte, we have to shift it
-	down to the bottom half otherwise it is using the most
-	significant bits instead of the least significant bits */
-	tcp_header_length = ((*(tcp_header + 12)) & 0xF0) >> 4;
-	/* The TCP header length stored in those 4 bits represents
-	how many 32-bit words there are in the header, just like
-	the IP header length. We multiply by four again to get a
-	byte count. */
-	tcp_header_length = tcp_header_length * 4;
-	printf("TCP header length in bytes: %d\n", tcp_header_length);
-
-	/* Add up all the header sizes to find the payload offset */
-	int total_headers_size = ethernet_header_length + ip_header_length + tcp_header_length;
-	printf("Size of all headers combined: %d bytes\n", total_headers_size);
-	payload_length = header->caplen -
-		(ethernet_header_length + ip_header_length + tcp_header_length);
-	printf("Payload size: %d bytes\n", payload_length);
-	payload = packet + total_headers_size;
-	printf("Memory address where payload begins: %p\n\n", payload);
-}
-
-void sniffer_loop(int argc, char **argv) {
+void sniffer_loop(char* filter) {
 	pcap_t* descr; /* pointer to device descriptor */
-	char* filter = NULL;
-	if (argc > 1) {
-		filter = argv[1];
-		printf("Using filter: %s\n", filter);
-	}
 	descr = open_go_live_and_set_filter(filter);
 	pcap_loop(descr,-1,got_packet,NULL);
 }
@@ -210,5 +104,21 @@ void sniffer_loop(int argc, char **argv) {
 void main(int argc, char **argv) {
 	setbuf(stdout, NULL);
 	setbuf(stderr, NULL);
-	sniffer_loop(argc, argv);
+	char* filter = NULL;
+
+	if (args < 2) {
+		printf("USAGE: libpcap_demo [sniff|fetch-one] [filter]");
+		return;
+	} else if (argc > 2) {
+		filter = argv[2];
+		printf("Using filter: %s\n", filter);
+	}
+	
+	if (strcmp(argv[1], "sniff")) {
+		printf("Sniffing!");
+		sniffer_loop(filter);
+	} else if (strcmp(argv[1], "fetch-one")) {
+		printef("Fetching one packet...");
+		sniff_one_packet(filter);
+	}
 }
