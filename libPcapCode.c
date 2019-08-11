@@ -7,32 +7,35 @@
 #include <netinet/ip.h>
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
+#include <string.h>
 
 #define ETHERTYPE_IP 0x0800 /* IP */
 #define ETHERTYPE_ARP 0x0806 /* Address resolution */ 
 
 void print_packet_info(const struct pcap_pkthdr* pkthdr, const u_char* packet);
 
-void print_device_info(const bpf_u_int32& ip_raw, const bpf_u_int32& subnet_mask_raw) {
+void print_device_info(const bpf_u_int32* ip_raw, const bpf_u_int32* subnet_mask_raw) {
+	char ip[18];
+	char subnet_mask[18];
 	struct in_addr address;
+
 	address.s_addr = *ip_raw;
 	strcpy(ip, inet_ntoa(address));
 	if (ip == NULL) {
 		perror("inet_ntoa"); /* print error */
-		return 1;
+		return;
 	}
-	printf("IP address: %s\n", ip);
 
 	/* Get subnet mask in human readable form */
 	address.s_addr = *subnet_mask_raw;
 	strcpy(subnet_mask, inet_ntoa(address));
 	if (subnet_mask == NULL) {
 		perror("inet_ntoa");
-		return 1;
+		return;
 	}
 
 	printf("IP address: %s\n", ip);
-	printf("Subnet mask: %s\n", subnet_mask);
+	printf("Subnet mask: %s\n\n", subnet_mask);
 }
 
 pcap_t* open_go_live_and_set_filter(char* filter) {
@@ -54,7 +57,7 @@ pcap_t* open_go_live_and_set_filter(char* filter) {
 	
 	/* ask pcap for the network address and mask of the device */
 	pcap_lookupnet(dev,&netp,&maskp,errbuf);
-	print_device_info(netp, masp);
+	print_device_info(&netp, &maskp);
 
 	descr = pcap_open_live(dev,BUFSIZ, 0, -1,errbuf);
 
