@@ -1,6 +1,3 @@
-start wireshark
-pause
-
 python ping.py --help
 pause
 

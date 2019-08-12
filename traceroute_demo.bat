@@ -1,6 +1,3 @@
-start wireshark
-pause
-
 python traceroute.py --help
 pause
 

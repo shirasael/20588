@@ -2,6 +2,7 @@ import socket
 import sys
 from contextlib import contextmanager
 from scapy.layers.inet import IP, UDP
+from scapy.layers.l2 import Ether
 from scapy.packet import Raw
 
 HOST = socket.gethostbyname(socket.gethostname())
@@ -24,7 +25,7 @@ def open_raw_socket(host=HOST, port=socket.SOCK_RAW):
 
 
 def raw_send(data, dst_host, dst_port,
-             src_host=HOST, src_port=socket.SOCK_RAW):
+             src_host=HOST, src_port=0):
     send_packet = IP(src=src_host, dst=dst_host)/               \
                   UDP(sport=src_port, dport=dst_port)/          \
                   Raw(data)
