@@ -1,0 +1,3 @@
+ntplib==0.3.3
+python-vlc==3.0.7110
+scapy==2.4.3
