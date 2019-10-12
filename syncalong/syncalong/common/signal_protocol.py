@@ -1,4 +1,4 @@
-from scapy.fields import ByteEnumField, LongField, FieldLenField, FieldListField, StrLenField
+from scapy.fields import ByteEnumField, LongField, FieldLenField, PacketListField, StrField
 from scapy.packet import Packet
 
 PLAY_SIGNAL = 1
@@ -9,9 +9,9 @@ commands = {PLAY_SIGNAL: "PLAY", STOP_SIGNAL: "STOP"}
 
 class Param(Packet):
     fields_desc = [FieldLenField("param_name_len", None, length_of="param_name"),
-                   StrLenField("param_name", 0),
+                   StrField("param_name", None, fmt="H"),
                    FieldLenField("param_len", None, length_of="param_data"),
-                   StrLenField("param_data", 0)]
+                   StrField("param_data", None, fmt="H")]
 
 
 class SignalPacket(Packet):
@@ -19,5 +19,10 @@ class SignalPacket(Packet):
     fields_desc = [ByteEnumField("command", len(commands), commands),
                    LongField("send_timestamp", 0),
                    FieldLenField("params_len", None, count_of="params"),
-                   FieldListField("params", [], Param,
-                                  count_from=lambda pkt: pkt.params_len)]
+                   PacketListField("params", [], Param,
+                                   count_from=lambda pkt: pkt.params_len)]
+
+
+def extract_params(signal_packet: SignalPacket):
+    return {param.param_name.decode("utf-8"): param.param_data.decode("utf-8") for param in signal_packet.params}
+
