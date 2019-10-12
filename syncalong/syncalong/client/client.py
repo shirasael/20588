@@ -1,6 +1,6 @@
 import socket
 
-from common.signal_protocol import PLAY_SIGNAL, STOP_SIGNAL
+from common.signal_protocol import PLAY_SIGNAL, STOP_SIGNAL, SignalPacket, extract_params
 import vlc
 
 
@@ -16,13 +16,16 @@ class Client(object):
         while True:
             try:
                 data = self.socket.recv(1024)
-                if data.startswith(PLAY_SIGNAL):
-                    music_file = data[len(PLAY_SIGNAL):].decode("utf-8")
+                signal_packet = SignalPacket(data)
+                if signal_packet.signal == PLAY_SIGNAL:
+                    music_file = signal_packet.music_file_path.decode('utf-8')
                     self.play(music_file)
-                if data.startswith(STOP_SIGNAL):
+                elif signal_packet.signal == STOP_SIGNAL:
                     self.stop()
+                else:
+                    print("Unknown signal received!")
             except Exception as msg:
-                print("An error occured: {}".format(msg))
+                print("An error occurred: {}".format(msg))
 
     def play(self, music_file):
         print("Playing {}".format(music_file))

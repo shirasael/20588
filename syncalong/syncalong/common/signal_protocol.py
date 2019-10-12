@@ -1,5 +1,8 @@
-from scapy.fields import ByteEnumField, LongField, FieldLenField, PacketListField, StrField
-from scapy.packet import Packet
+from scapy.fields import FieldLenField, PacketListField, StrField, IntField, IntEnumField, IEEEFloatField, StrLenField
+from scapy.packet import Packet, Raw
+
+DEFAULT_WAIT_SECONDS = 3
+
 
 PLAY_SIGNAL = 1
 STOP_SIGNAL = 2
@@ -7,22 +10,12 @@ STOP_SIGNAL = 2
 commands = {PLAY_SIGNAL: "PLAY", STOP_SIGNAL: "STOP"}
 
 
-class Param(Packet):
-    fields_desc = [FieldLenField("param_name_len", None, length_of="param_name"),
-                   StrField("param_name", None, fmt="H"),
-                   FieldLenField("param_len", None, length_of="param_data"),
-                   StrField("param_data", None, fmt="H")]
-
-
 class SignalPacket(Packet):
     name = "SignalPacket"
-    fields_desc = [ByteEnumField("command", len(commands), commands),
-                   LongField("send_timestamp", 0),
-                   FieldLenField("params_len", None, count_of="params"),
-                   PacketListField("params", [], Param,
-                                   count_from=lambda pkt: pkt.params_len)]
+    fields_desc = [IntEnumField("signal", 1, commands),
+                   IEEEFloatField("send_timestamp", 0),
+                   IntField("wait_seconds", DEFAULT_WAIT_SECONDS),
+                   FieldLenField("music_file_path_len", None, length_of="music_file_path"),
+                   StrField("music_file_path", None)]
 
-
-def extract_params(signal_packet: SignalPacket):
-    return {param.param_name.decode("utf-8"): param.param_data.decode("utf-8") for param in signal_packet.params}
 

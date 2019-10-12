@@ -4,7 +4,9 @@ import threading
 import time
 from typing import Dict
 
-from common.signal_protocol import PLAY_SIGNAL, STOP_SIGNAL
+from scapy.compat import raw
+
+from common.signal_protocol import *
 
 
 class Entity(object):
@@ -49,27 +51,22 @@ class MusicServer(object):
         self.recv_thread.start()
 
     def signal_play_all(self):
-        for entity, conn in self.clients.items():
-            try:
-                conn.send(PLAY_SIGNAL + bytes(music_file, encoding="utf-8"))
-            except Exception as msg:
-                print("Could not signal client {} to play. Error: {}".format(entity, msg))
+        self._send_signal(PLAY_SIGNAL, music_file_path=music_file)
 
     def signal_stop_all(self):
-        for entity, conn in self.clients.items():
-            try:
-                conn.send(STOP_SIGNAL)
-            except Exception as msg:
-                print("Could not signal client {}. Error: {}".format(entity, msg))
+        self._send_signal(STOP_SIGNAL)
 
-    def send_signal(self, signal, wait_seconds, *args):
+    def _send_signal(self, signal, wait_seconds=DEFAULT_WAIT_SECONDS, music_file_path=None):
         send_time = datetime.datetime.now().timestamp()
-
+        signal_packet = SignalPacket(signal=signal,
+                                     send_timestamp=send_time,
+                                     wait_seconds=wait_seconds,
+                                     music_file_path=music_file_path or "")
         for entity, conn in self.clients.items():
             try:
-                conn.send(STOP_SIGNAL)
+                conn.send(raw(signal_packet))
             except Exception as msg:
-                print("Could not signal client {}. Error: {}".format(entity, msg))
+                print("Could not send signal to client {}. Error: {}".format(entity, msg))
 
 
 if __name__ == "__main__":
