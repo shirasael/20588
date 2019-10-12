@@ -1,5 +1,5 @@
-from scapy.fields import FieldLenField, PacketListField, StrField, IntField, IntEnumField, IEEEFloatField, StrLenField
-from scapy.packet import Packet, Raw
+from scapy.fields import FieldLenField, StrField, IntField, IntEnumField, IEEEFloatField
+from scapy.packet import Packet
 
 DEFAULT_WAIT_SECONDS = 3
 

@@ -51,9 +51,11 @@ class MusicServer(object):
         self.recv_thread.start()
 
     def signal_play_all(self):
+        print("Signal play")
         self._send_signal(PLAY_SIGNAL, music_file_path=music_file)
 
     def signal_stop_all(self):
+        print("Signal stop")
         self._send_signal(STOP_SIGNAL)
 
     def _send_signal(self, signal, wait_seconds=DEFAULT_WAIT_SECONDS, music_file_path=None):
@@ -71,8 +73,10 @@ class MusicServer(object):
 
 if __name__ == "__main__":
     ms = MusicServer("0.0.0.0", 12345)
-    while len(ms.clients) == 0:
-        continue
-    ms.signal_play_all()
-    time.sleep(3)
-    ms.signal_stop_all()
+    while True:
+        while len(ms.clients) == 0:
+            continue
+        ms.signal_play_all()
+        time.sleep(3)
+        ms.signal_stop_all()
+        ms.clients = {}
