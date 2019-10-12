@@ -1,6 +1,6 @@
 import socket
 
-from common.consts import PLAY_SIGNAL, STOP_SIGNAL
+from common.signal_protocol import PLAY_SIGNAL, STOP_SIGNAL
 import vlc
 
 

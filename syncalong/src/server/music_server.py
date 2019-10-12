@@ -1,9 +1,10 @@
+import datetime
 import socket
 import threading
 import time
 from typing import Dict
 
-from common.consts import PLAY_SIGNAL, STOP_SIGNAL
+from common.signal_protocol import PLAY_SIGNAL, STOP_SIGNAL
 
 
 class Entity(object):
@@ -55,6 +56,15 @@ class MusicServer(object):
                 print("Could not signal client {} to play. Error: {}".format(entity, msg))
 
     def signal_stop_all(self):
+        for entity, conn in self.clients.items():
+            try:
+                conn.send(STOP_SIGNAL)
+            except Exception as msg:
+                print("Could not signal client {}. Error: {}".format(entity, msg))
+
+    def send_signal(self, signal, wait_seconds, *args):
+        send_time = datetime.datetime.now().timestamp()
+
         for entity, conn in self.clients.items():
             try:
                 conn.send(STOP_SIGNAL)
