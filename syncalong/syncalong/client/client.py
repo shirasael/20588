@@ -38,16 +38,16 @@ class Client(object):
 
     def stop(self):
         if self.media_player is not None:
+            print("Stopping music")
             self.media_player.stop()
         else:
             print("No music currently playing!")
 
     def _handle_signal(self, signal_packet):
+        print("Got signal {}".format(signal_packet.signal))
         server_send_time = datetime.datetime.fromtimestamp(signal_packet.send_timestamp)
         delay = signal_packet.wait_seconds
-        print("waiting..")
         wait_for_remote_time(server_send_time, delay, self.ntp_server)
-        print("done!")
         if signal_packet.signal == PLAY_SIGNAL:
             music_file = signal_packet.music_file_path.decode('utf-8')
             self.play(music_file)

@@ -15,7 +15,6 @@ def wait_for_remote_time(remote_start_time: datetime.datetime,
     wait_delta = datetime.timedelta(seconds=wait_time_seconds)
     target_time = remote_start_time + wait_delta
     current_remote_time = get_remote_time(ntp_server, ntp_port)
-    print(current_remote_time, target_time)
     if target_time > current_remote_time:
         time.sleep((target_time - current_remote_time).seconds)
 
