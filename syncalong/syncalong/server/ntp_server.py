@@ -313,7 +313,7 @@ class NTPServer(object):
         ntp_socket.bind((self.ip, self.port))
         print("Starting NTP server socket: {} ".format(ntp_socket.getsockname()))
 
-        self.recv_thread = RecvThread(ntp_socket, self.task_queue)  # Use 240 secs offset for testing
+        self.recv_thread = RecvThread(ntp_socket, self.task_queue)
         self.recv_thread.start()
         self.work_thread = WorkThread(ntp_socket, self.task_queue)
         self.work_thread.start()

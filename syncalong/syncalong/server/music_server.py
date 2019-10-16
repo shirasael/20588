@@ -17,6 +17,12 @@ class Entity(object):
     def __repr__(self):
         return "Client<{}:{}>".format(self.ip, self.port)
 
+    def __eq__(self, other):
+        return self.ip == other.ip and self.port == other.port
+
+    def __hash__(self):
+        return hash(tuple(sorted(self.__dict__.items())))
+
 
 music_file = r'C:\Users\Shira\Documents\20588\file_example_MP3_1MG.mp3'
 
@@ -26,15 +32,19 @@ class RecvClientsThread(threading.Thread):
         super().__init__()
         self.listening_socket = listening_socket
         self.on_recv_callback = on_recv_callback
+        self.should_stop = False
 
     def run(self):
-        while True:
+        while not self.should_stop:
             try:
                 conn, address = self.listening_socket.accept()
                 data = conn.recv(1024)
                 self.on_recv_callback(data, conn, address)
             except Exception as msg:
                 print("An error occured on server thread: {}".format(msg))
+
+    def stop(self):
+        self.should_stop = True
 
 
 class MusicServer(object):
@@ -69,6 +79,9 @@ class MusicServer(object):
                 conn.send(raw(signal_packet))
             except Exception as msg:
                 print("Could not send signal to client {}. Error: {}".format(entity, msg))
+
+    def stop(self):
+        self.recv_thread.stop()
 
 
 if __name__ == "__main__":
