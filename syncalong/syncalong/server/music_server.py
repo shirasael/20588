@@ -47,11 +47,11 @@ class RecvClientsThread(threading.Thread):
 class MusicServer(object):
     clients: Dict[Entity, socket.socket]
 
-    def __init__(self, ip, port):
+    def __init__(self, ip, port, max_clients=10):
         self.clients = {}
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server_socket.bind((ip, port))
-        self.server_socket.listen(10)
+        self.server_socket.listen(max_clients)
         print("Accepting clients at {}:{}".format(ip, port))
         self.recv_thread = RecvClientsThread(self.server_socket,
                                              lambda _, conn, address: self.clients.update({Entity(*address): conn}))
