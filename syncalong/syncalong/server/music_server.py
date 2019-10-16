@@ -1,8 +1,8 @@
-import datetime
 import socket
 import threading
 import time
 from typing import Dict
+from datetime import datetime
 
 from scapy.compat import raw
 
@@ -22,9 +22,6 @@ class Entity(object):
 
     def __hash__(self):
         return hash(tuple(sorted(self.__dict__.items())))
-
-
-music_file = r'C:\Users\Shira\Documents\20588\file_example_MP3_1MG.mp3'
 
 
 class RecvClientsThread(threading.Thread):
@@ -58,9 +55,13 @@ class MusicServer(object):
         print("Accepting clients at {}:{}".format(ip, port))
         self.recv_thread = RecvClientsThread(self.server_socket,
                                              lambda _, conn, address: self.clients.update({Entity(*address): conn}))
-        self.recv_thread.start()
 
-    def signal_play_all(self):
+    def start(self):
+        self.recv_thread.should_stop = False
+        if not self.recv_thread.is_alive():
+            self.recv_thread.start()
+
+    def signal_play_all(self, music_file):
         print("Signal play")
         self._send_signal(PLAY_SIGNAL, music_file_path=music_file)
 
@@ -69,7 +70,7 @@ class MusicServer(object):
         self._send_signal(STOP_SIGNAL)
 
     def _send_signal(self, signal, wait_seconds=DEFAULT_WAIT_SECONDS, music_file_path=None):
-        send_time = datetime.datetime.now().timestamp()
+        send_time = datetime.now().timestamp()
         signal_packet = SignalPacket(signal=signal,
                                      send_timestamp=send_time,
                                      wait_seconds=wait_seconds,
@@ -85,11 +86,13 @@ class MusicServer(object):
 
 
 if __name__ == "__main__":
+    music_file = r'C:\Users\Shira\Documents\20588\file_example_MP3_1MG.mp3'
     ms = MusicServer("0.0.0.0", 12345)
+    ms.start()
     while True:
         while len(ms.clients) == 0:
             continue
-        ms.signal_play_all()
+        ms.signal_play_all(music_file)
         time.sleep(3)
         ms.signal_stop_all()
         ms.clients = {}
