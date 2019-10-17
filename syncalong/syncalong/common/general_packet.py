@@ -30,7 +30,7 @@ class GeneralPacket(Packet):
 def handle_packet(pkt: GeneralPacket, type_handlers):
     layer_type = all_layers[pkt.layer_type]
     handler = type_handlers[layer_type]
-    inner_pkt = pkt.__getattr__(layer_type._name)
+    inner_pkt = pkt[layer_type]
     return handler(inner_pkt)
 
 

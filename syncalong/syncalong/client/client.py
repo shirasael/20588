@@ -11,7 +11,7 @@ from syncalong.common.file_sync_packet import FileSyncPacket, WHO_HAS, who_has_a
 from syncalong.common.signal_packet import PLAY_SIGNAL, STOP_SIGNAL, SignalPacket
 
 
-class UnknownSignalException:
+class UnknownSignalException(Exception):
     def __init__(self, signal):
         self.signal = signal
 
