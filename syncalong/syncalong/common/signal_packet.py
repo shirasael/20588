@@ -3,7 +3,6 @@ from scapy.packet import Packet
 
 DEFAULT_WAIT_SECONDS = 5
 
-
 PLAY_SIGNAL = 1
 STOP_SIGNAL = 2
 
@@ -11,11 +10,11 @@ commands = {PLAY_SIGNAL: "PLAY", STOP_SIGNAL: "STOP"}
 
 
 class SignalPacket(Packet):
-    name = "SignalPacket"
+    name = "signal_packet"
     fields_desc = [IntEnumField("signal", 1, commands),
                    IEEEDoubleField("send_timestamp", 0),
                    IntField("wait_seconds", DEFAULT_WAIT_SECONDS),
-                   FieldLenField("music_file_path_len", None, length_of="music_file_path"),
-                   StrField("music_file_path", None)]
+                   FieldLenField("music_file_name_len", None, length_of="music_file_name"),
+                   StrField("music_file_name", "")]
 
 

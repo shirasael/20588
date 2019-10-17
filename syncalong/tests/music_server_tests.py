@@ -2,7 +2,7 @@ import time
 import mock
 from scapy.compat import raw
 from datetime import datetime
-from common.signal_protocol import SignalPacket, PLAY_SIGNAL, DEFAULT_WAIT_SECONDS, STOP_SIGNAL
+from common.signal_packet import SignalPacket, PLAY_SIGNAL, DEFAULT_WAIT_SECONDS, STOP_SIGNAL
 from server.music_server import MusicServer, Entity
 
 
@@ -79,7 +79,7 @@ def test_signal_play_all(_):
     expected_message = SignalPacket(signal=PLAY_SIGNAL,
                                     send_timestamp=now.timestamp(),
                                     wait_seconds=DEFAULT_WAIT_SECONDS,
-                                    music_file_path=dummy_path)
+                                    music_file_name=dummy_path)
 
     with mock.patch('server.music_server.datetime') as mock_datetime:
         mock_datetime.now.return_value = now
@@ -102,7 +102,7 @@ def test_signal_stop_all(_):
     expected_message = SignalPacket(signal=STOP_SIGNAL,
                                     send_timestamp=now.timestamp(),
                                     wait_seconds=DEFAULT_WAIT_SECONDS,
-                                    music_file_path="")
+                                    music_file_name="")
 
     with mock.patch('server.music_server.datetime') as mock_datetime:
         mock_datetime.now.return_value = now
