@@ -1,5 +1,6 @@
 import socket
 import _socket
+from typing import List
 
 from scapy.compat import raw
 from scapy.packet import Packet
@@ -43,5 +44,22 @@ class LengthSocket(socket.socket):
         sock = LengthSocket(self.family, self.type, self.proto, fileno=fd)
         return sock, addr
 
+    def send_all(self, packets):
+        for packet in packets:
+            self.send_packet(packet)
+
+    def __repr__(self):
+        addr, port = self.getsockname()
+        return f"<LengthSocket {addr}:{port}>"
 
 
+def send_to_all(sockets: List[LengthSocket], packets: List):
+    sending_sockets = [s for s in sockets]
+    for packet in packets:
+        for s in sending_sockets:
+            try:
+                s.send_packet(packet)
+            except (Exception, socket.error) as e:
+                print(f"Could not send packets to {s}: {e}")
+                print(f"Stopping transmit to {s}")
+                sending_sockets.remove(s)

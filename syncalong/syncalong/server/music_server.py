@@ -1,28 +1,13 @@
 import socket
 import threading
 import time
-from typing import Dict
+from typing import List
 from datetime import datetime
 
 from common.general_packet import GeneralPacket
-from syncalong.common.length_socket import LengthSocket
+from syncalong.common.length_socket import LengthSocket, send_to_all
 from syncalong.common.signal_packet import *
 from syncalong.common.file_sync_packet import *
-
-
-class Entity(object):
-    def __init__(self, ip, port):
-        self.ip = ip
-        self.port = port
-
-    def __repr__(self):
-        return "Client<{}:{}>".format(self.ip, self.port)
-
-    def __eq__(self, other):
-        return self.ip == other.ip and self.port == other.port
-
-    def __hash__(self):
-        return hash(tuple(sorted(self.__dict__.items())))
 
 
 class RecvClientsThread(threading.Thread):
@@ -38,24 +23,24 @@ class RecvClientsThread(threading.Thread):
                 conn, address = self.listening_socket.accept()
                 data = conn.recv()
                 self.on_recv_callback(data, conn, address)
-            except Exception as msg:
-                print("An error occured on server thread: {}".format(msg))
+            except (Exception, socket.error) as e:
+                print(f"An error occured on server thread: {e}")
 
     def stop(self):
         self.should_stop = True
 
 
 class MusicServer(object):
-    clients: Dict[Entity, LengthSocket]
+    clients: List[LengthSocket]
 
     def __init__(self, ip, port, max_clients=10):
-        self.clients = {}
+        self.clients = []
         self.server_socket = LengthSocket(socket.AF_INET, socket.SOCK_STREAM)
         self.server_socket.bind((ip, port))
         self.server_socket.listen(max_clients)
-        print("Accepting clients at {}:{}".format(ip, port))
+        print(f"Accepting clients at {ip}:{port}")
         self.recv_thread = RecvClientsThread(self.server_socket,
-                                             lambda _, conn, address: self.clients.update({Entity(*address): conn}))
+                                             lambda data, conn, addr: self.clients.append(conn))
 
     def start(self):
         self.recv_thread.should_stop = False
@@ -71,25 +56,29 @@ class MusicServer(object):
         self._send_signal(STOP_SIGNAL)
 
     def serve_music_file(self, local_file_path: str):
-        print("Sending file {}".format(local_file_path))
+        print(f"Sending file {local_file_path}")
+        missing_clients = self.query_file_existence(local_file_path)
+        send_to_all(missing_clients, send_file_data(local_file_path))
+
+    def query_file_existence(self, local_file_path: str) -> List[LengthSocket]:
+        """
+        Check which of the clients have the given file in their repository.
+        :param local_file_path: File to look for in clients.
+        :return: List of all the clients that don't have the required file and should be synced.
+        """
         who_has = who_has_packet(local_file_path)
         missing_clients = []
-        for entity, conn in self.clients.items():
-            print("{} has {}?".format(entity, local_file_path))
+        for conn in self.clients:
+            print(f"{conn} has {local_file_path}?")
             try:
                 conn.send_packet(who_has)
                 ans = GeneralPacket(conn.recv())[FileSyncPacket]
                 if ans.message_type == MISSING:
                     missing_clients.append(conn)
-                    print("Sending file to {}".format(entity))
-            except ... as e:
-                print("Could not check client {}: {}".format(entity, e))
-        for packet in send_file_data(local_file_path):
-            for conn in missing_clients:
-                try:
-                    conn.send_packet(packet)
-                except ... as e:
-                    print("could not send file to client: {}".format(e))
+                    print(f"Sending file to {conn}")
+            except (Exception, socket.error) as e:
+                print(f"Could not check {conn}: {e}")
+        return missing_clients
 
     def _send_signal(self, signal, wait_seconds=DEFAULT_WAIT_SECONDS, music_file_name=None):
         send_time = datetime.now().timestamp()
@@ -97,11 +86,11 @@ class MusicServer(object):
                                      send_timestamp=send_time,
                                      wait_seconds=wait_seconds,
                                      music_file_name=music_file_name or "")
-        for entity, conn in self.clients.items():
+        for conn in self.clients:
             try:
                 conn.send_packet(signal_packet)
-            except Exception as msg:
-                print("Could not send signal to client {}. Error: {}".format(entity, msg))
+            except (Exception, socket.error) as e:
+                print(f"Could not send signal to {conn}: {e}")
 
     def stop(self):
         self.recv_thread.stop()
@@ -118,4 +107,4 @@ if __name__ == "__main__":
         ms.signal_play_all(music_file)
         time.sleep(3)
         ms.signal_stop_all()
-        ms.clients = {}
+        ms.clients = []
