@@ -53,7 +53,7 @@ class LengthSocket(socket.socket):
         return f"<LengthSocket {addr}:{port}>"
 
 
-def send_to_all(sockets: List[LengthSocket], packets: List):
+def send_to_all(sockets: List[LengthSocket], packets):
     sending_sockets = [s for s in sockets]
     for packet in packets:
         for s in sending_sockets:
