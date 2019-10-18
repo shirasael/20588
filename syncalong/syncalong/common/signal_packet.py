@@ -17,4 +17,8 @@ class SignalPacket(Packet):
                    FieldLenField("music_file_name_len", None, length_of="music_file_name"),
                    StrField("music_file_name", "")]
 
-
+    def __eq__(self, other):
+        return self.signal == other.signal \
+               and self.send_timestamp == other.send_timestamp \
+               and self.wait_seconds == other.wait_seconds \
+               and self.music_file_name == other.music_file_name
