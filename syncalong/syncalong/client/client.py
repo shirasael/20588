@@ -38,6 +38,8 @@ class Client(object):
         """
         self.ntp_server = ntp_server
         self.music_files_repo = music_files_repo
+        if not os.path.exists(self.music_files_repo):
+            os.makedirs(self.music_files_repo) 
         self.socket = LengthSocket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.connect((server_ip, server_port))
         self.media_player = None
@@ -123,8 +125,3 @@ class Client(object):
                     data = self.socket.recv()
                     received += len(data)
                     local_file.write(data)
-
-
-if __name__ == "__main__":
-    c = Client("localhost", 22222, '127.0.0.1', r'C:\temp\syncalong')
-    c.start()
