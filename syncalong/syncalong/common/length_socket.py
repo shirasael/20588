@@ -3,7 +3,9 @@ import _socket
 from typing import List
 
 from scapy.compat import raw
+
 from common.general_packet import GeneralPacket, generate_packet
+from syncalong.common.data_packet import DataPacket
 
 
 def int_to_bytes(x: int) -> bytes:
@@ -23,20 +25,8 @@ class LengthSocket(socket.socket):
     Length packet also offers integration with packets used by server / clients in this program, and is responsible
     for building the packets properly before sending them.
     """
-    def send(self, data: bytes, flags: int = ...) -> int:
-        """
-        Send the given bytes, preceding their length. Flags are ignored.
-        :param data: The data to be sent.
-        :param flags: Ignored.
-        :return: Total amount of bytes sent (data length bytes + data length)
-        """
-        print (len(data))
-        print (int_to_bytes(len(data)))
-        sent_len = super().send(int_to_bytes(len(data)))
-        sent_data = super().send(data)
-        return sent_len + sent_data
 
-    def send_packet(self, packet):
+    def send(self, packet, flags: int = ...) -> int:
         """
         Send a single packet (alongside its length).
         A packet might be of type GeneralPacket, of a specific custom packet which is part of this program's
@@ -47,14 +37,18 @@ class LengthSocket(socket.socket):
         If a custom packet is passed, it'll be wrapped with GeneralPacket, and then built and sent.
 
         :param packet: The packet (or bytes) to be sent.
+        :param flags: Ignored.
         :return: Total amount of bytes sent.
         """
-        if isinstance(packet, bytes):
-            return self.send(packet)
-        packet_to_send = packet
-        if not isinstance(packet_to_send, GeneralPacket):
-            packet_to_send = generate_packet(packet)
-        return self.send(raw(packet_to_send))
+        to_send = packet
+        if not isinstance(to_send, bytes):
+            if not isinstance(packet, GeneralPacket):
+                to_send = generate_packet(packet)
+            to_send = raw(to_send)
+        if not isinstance(packet, DataPacket):
+            sent_len = super().send(int_to_bytes(len(to_send)))
+        sent_data = super().send(to_send)
+        return sent_len + sent_data
 
     def recv(self, bufsize: int = -1, flags: int = ...) -> bytes:
         """
@@ -104,7 +98,7 @@ def send_to_all(sockets: List[LengthSocket], packets):
     for packet in packets:
         for s in sending_sockets:
             try:
-                s.send_packet(packet)
+                s.send(packet)
             except (Exception, socket.error) as e:
                 print(f"Could not send packets to {s}: {e}")
                 print(f"Stopping transmit to {s}")

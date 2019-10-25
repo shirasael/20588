@@ -4,9 +4,10 @@ from scapy.packet import Packet, bind_layers, Padding
 
 from syncalong.common.signal_packet import SignalPacket
 from syncalong.common.file_sync_packet import FileSyncPacket
+from syncalong.common.data_packet import DataPacket
 
 # All of the possible packets in the program.
-all_layers = [SignalPacket, FileSyncPacket]
+all_layers = [SignalPacket, FileSyncPacket, DataPacket]
 
 layers_dict = {}
 
@@ -36,6 +37,7 @@ class GeneralPacket(Packet):
         IntEnumField("layer_type", 1, layers_dict),
         condition(SignalPacket),
         condition(FileSyncPacket),
+        condition(DataPacket),
     ]
 
 

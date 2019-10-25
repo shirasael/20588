@@ -136,7 +136,7 @@ class MusicServer(object):
         for conn in self.clients:
             print(f"{conn} has {local_file_path}?")
             try:
-                conn.send_packet(who_has)
+                conn.send(who_has)
                 ans = GeneralPacket(conn.recv())[FileSyncPacket]
                 if ans.message_type == MISSING:
                     missing_clients.append(conn)

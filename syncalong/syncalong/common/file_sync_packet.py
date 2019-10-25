@@ -3,6 +3,8 @@ import os
 from scapy.fields import IntEnumField, FieldLenField, StrField, IntField
 from scapy.packet import Packet
 
+from syncalong.common.data_packet import DataPacket
+
 MISSING = 0
 HAVE = 1
 WHO_HAS = 2
@@ -51,4 +53,4 @@ def read_file(file_path):
                      file_size=os.path.getsize(file_path))
     with open(file_path, 'rb') as file_to_send:
         data = file_to_send.read()
-        yield data
+        yield DataPacket(data=data)

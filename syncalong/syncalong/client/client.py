@@ -113,12 +113,12 @@ class Client(object):
         if file_sync_packet.message_type == WHO_HAS:
             print("Got who has!")
             send_packet = who_has_answer_packet(local_path, file_sync_packet.file_size)
-            self.socket.send_packet(send_packet)
+            self.socket.send(send_packet)
         elif file_sync_packet.message_type == FILE_SEND:
             file_size = file_sync_packet.file_size
             received = 0
             with open(local_path, 'wb') as local_file:
                 while received < file_size:
-                    data = self.socket.recv()
+                    data = self.socket.recv(1024)
                     received += len(data)
                     local_file.write(data)
