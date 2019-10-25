@@ -30,6 +30,8 @@ class LengthSocket(socket.socket):
         :param flags: Ignored.
         :return: Total amount of bytes sent (data length bytes + data length)
         """
+        print (len(data))
+        print (int_to_bytes(len(data)))
         sent_len = super().send(int_to_bytes(len(data)))
         sent_data = super().send(data)
         return sent_len + sent_data
@@ -83,14 +85,6 @@ class LengthSocket(socket.socket):
         fd = _socket.dup(conn.fileno())
         sock = LengthSocket(self.family, self.type, self.proto, fileno=fd)
         return sock, addr
-
-    def send_all(self, packets):
-        """
-        Send all the given packets.
-        :param packets: List of packets to be sent.
-        """
-        for packet in packets:
-            self.send_packet(packet)
 
     def __repr__(self):
         addr, port = self.getsockname()

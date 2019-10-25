@@ -6,10 +6,13 @@ if __name__ == "__main__":
     ms = MusicServer("0.0.0.0", 22222)
     ms.start()
     while True:
-        while len(ms.clients) == 0:
-            continue
-        ms.serve_music_file(music_file)
-        ms.signal_play_all(music_file)
-        time.sleep(10)
-        ms.signal_stop_all()
-        ms.clients = []
+        try:
+            while len(ms.clients) == 0:
+                continue
+            ms.serve_music_file(music_file)
+            ms.signal_play_all(music_file)
+            time.sleep(10)
+            ms.signal_stop_all()
+            ms.clients = []
+        except:
+            print('Some Error has accured')

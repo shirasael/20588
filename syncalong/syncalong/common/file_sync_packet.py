@@ -44,3 +44,11 @@ def send_file_data(file_path):
         while data:
             yield data
             data = file_to_send.read(1024)
+
+def read_file(file_path):
+    yield FileSyncPacket(message_type=FILE_SEND,
+                     file_name=os.path.basename(file_path),
+                     file_size=os.path.getsize(file_path))
+    with open(file_path, 'rb') as file_to_send:
+        data = file_to_send.read()
+        yield data

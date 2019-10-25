@@ -53,14 +53,11 @@ class Client(object):
         """
         self.socket.send(bytes("hello", encoding="utf-8"))
         while True:
-            try:
-                recv_packet = GeneralPacket(self.socket.recv())
-                handle_packet(recv_packet, {
-                    SignalPacket: self._handle_signal,
-                    FileSyncPacket: self._handle_file_sync
-                })
-            except Exception as msg:
-                print("An error occurred: {}".format(msg))
+            recv_packet = GeneralPacket(self.socket.recv())
+            handle_packet(recv_packet, {
+                SignalPacket: self._handle_signal,
+                FileSyncPacket: self._handle_file_sync
+            })
 
     def play(self, music_file_path):
         """
