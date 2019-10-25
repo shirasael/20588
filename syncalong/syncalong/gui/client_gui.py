@@ -13,9 +13,9 @@ class Mp3Panel(wx.Panel):
             self, size=(-1, 100), 
             style=wx.LC_REPORT | wx.BORDER_SUNKEN
         )
-        self.list_ctrl.InsertColumn(0, 'Artist', width=140)
-        self.list_ctrl.InsertColumn(1, 'Album', width=140)
-        self.list_ctrl.InsertColumn(2, 'Title', width=200)
+        self.list_ctrl.InsertColumn(0, 'Title', width=200)
+        self.list_ctrl.InsertColumn(1, 'Artist', width=140)
+        self.list_ctrl.InsertColumn(2, 'Album', width=140)
         main_sizer.Add(self.list_ctrl, 0, wx.ALL | wx.EXPAND, 5)        
         edit_button = wx.Button(self, label='Update server')
         edit_button.Bind(wx.EVT_BUTTON, self.on_update)
