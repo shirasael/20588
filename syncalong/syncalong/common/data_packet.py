@@ -7,6 +7,6 @@ from scapy.packet import Packet
 class DataPacket(Packet):
     name = "data_packet"
     fields_desc = [
-        FieldLenField("data_len", None, length_of="data"),
+        FieldLenField("data_len", None, length_of="data", fmt="I"),
         StrField("data", ""),
     ]
