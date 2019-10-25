@@ -1,7 +1,7 @@
 import datetime
 import os
 import socket
-import vlc
+import pygame
 
 from common.general_packet import GeneralPacket, handle_packet
 from syncalong.client.timer import wait_for_remote_time
@@ -36,6 +36,7 @@ class Client(object):
         :param ntp_server: Hostname of an NTP server to sync from.
         :param music_files_repo: Local path of a directory which will be used as the client's repository.
         """
+        pygame.mixer.init()
         self.ntp_server = ntp_server
         self.music_files_repo = music_files_repo
         if not os.path.exists(self.music_files_repo):
@@ -65,18 +66,14 @@ class Client(object):
         :param music_file_path: Local music file to be played.
         """
         print("Playing {}".format(music_file_path))
-        self.media_player = vlc.MediaPlayer(music_file_path)
-        self.media_player.play()
+        pygame.mixer.music.load(music_file_path)
+        pygame.mixer.music.play()
 
     def stop(self):
         """
         Stop playing whatever is playing now. If nothing is played - a message is printed and no exception is thrown.
         """
-        if self.media_player is not None:
-            print("Stopping music")
-            self.media_player.stop()
-        else:
-            print("No music currently playing!")
+        pygame.mixer.music.stop()
 
     def _handle_signal(self, signal_packet: SignalPacket):
         """

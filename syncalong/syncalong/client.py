@@ -1,5 +1,5 @@
 from client.client import Client
 
 if __name__ == "__main__":
-    c = Client("localhost", 22222, '127.0.0.1', r'C:\temp\syncalong')
+    c = Client("10.0.0.5", 22222, '10.0.0.5', r'C:\temp\syncalong')
     c.start()

@@ -1,4 +1,4 @@
 ntplib==0.3.3
-python-vlc==3.0.7110
+pygame==1.9.6
 scapy==2.4.3
 mock==3.0.5
