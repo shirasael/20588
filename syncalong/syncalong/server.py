@@ -2,7 +2,7 @@ import time
 from server.music_server import MusicServer
 
 if __name__ == "__main__":
-    music_file = r'D:\itai\pyhton\Always Dreaming - Same Town Forever.mp3'
+    music_file = r"C:\Users\Shira\Documents\20588\file_example_MP3_1MG.mp3"
     ms = MusicServer("0.0.0.0", 22222)
     ms.start()
     while True:

@@ -5,7 +5,6 @@ from typing import List
 from scapy.compat import raw
 
 from common.general_packet import GeneralPacket, generate_packet
-from syncalong.common.data_packet import DataPacket
 
 
 def int_to_bytes(x: int) -> bytes:
@@ -41,11 +40,11 @@ class LengthSocket(socket.socket):
         :return: Total amount of bytes sent.
         """
         to_send = packet
+        sent_len = 0
         if not isinstance(to_send, bytes):
             if not isinstance(packet, GeneralPacket):
                 to_send = generate_packet(packet)
             to_send = raw(to_send)
-        if not isinstance(packet, DataPacket):
             sent_len = super().send(int_to_bytes(len(to_send)))
         sent_data = super().send(to_send)
         return sent_len + sent_data

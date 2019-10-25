@@ -119,6 +119,7 @@ class Client(object):
             received = 0
             with open(local_path, 'wb') as local_file:
                 while received < file_size:
-                    data = self.socket.recv(1024)
+                    read_size = 1024 if file_size - received >= 1024 else file_size - received
+                    data = self.socket.recv(read_size)
                     received += len(data)
                     local_file.write(data)

@@ -36,10 +36,11 @@ class RecvClientsThread(threading.Thread):
         while not self.should_stop:
             try:
                 conn, address = self.listening_socket.accept()
-                data = conn.recv()
+                data = conn.recv(len('hello'))
                 self.on_recv_callback(data, conn, address)
             except (Exception, socket.error) as e:
                 print(f"An error occured on server thread: {e}")
+                raise
 
     def stop(self):
         """
