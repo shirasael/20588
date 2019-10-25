@@ -8,7 +8,7 @@ from syncalong.client.timer import wait_for_remote_time
 
 from syncalong.common.length_socket import LengthSocket
 from syncalong.common.file_sync_packet import FileSyncPacket, WHO_HAS, who_has_answer_packet, FILE_SEND
-from syncalong.common.signal_packet import PLAY_SIGNAL, STOP_SIGNAL, SignalPacket
+from syncalong.common.signal_packet import PLAY_SIGNAL, STOP_SIGNAL, SignalPacket, PAUSE_SIGNAL, UNPAUSE_SIGNAL
 
 
 class UnknownSignalException(Exception):
@@ -60,7 +60,7 @@ class Client(object):
                 FileSyncPacket: self._handle_file_sync
             })
 
-    def play(self, music_file_path):
+    def _handle_play(self, music_file_path):
         """
         Play the file at the given path. If the file is not found, an exception is thrown.
         :param music_file_path: Local music file to be played.
@@ -68,12 +68,6 @@ class Client(object):
         print("Playing {}".format(music_file_path))
         pygame.mixer.music.load(music_file_path)
         pygame.mixer.music.play()
-
-    def stop(self):
-        """
-        Stop playing whatever is playing now. If nothing is played - a message is printed and no exception is thrown.
-        """
-        pygame.mixer.music.stop()
 
     def _handle_signal(self, signal_packet: SignalPacket):
         """
@@ -86,12 +80,18 @@ class Client(object):
         server_send_time = datetime.datetime.fromtimestamp(signal_packet.send_timestamp)
         delay = signal_packet.wait_seconds
         wait_for_remote_time(server_send_time, delay, self.ntp_server)
+
+        music_ctl_handlers = {
+            STOP_SIGNAL: pygame.mixer.music.stop,
+            PAUSE_SIGNAL: pygame.mixer.music.pause,
+            UNPAUSE_SIGNAL: pygame.mixer.music.unpause
+        }
         if signal_packet.signal == PLAY_SIGNAL:
             music_file = signal_packet.music_file_name.decode('utf-8')
             local_music_file_path = os.path.join(self.music_files_repo, music_file)
-            self.play(local_music_file_path)
-        elif signal_packet.signal == STOP_SIGNAL:
-            self.stop()
+            self._handle_play(local_music_file_path)
+        elif signal_packet.signal in music_ctl_handlers:
+            music_ctl_handlers[signal_packet]()
         else:
             raise UnknownSignalException(signal_packet.signal)
 

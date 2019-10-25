@@ -102,6 +102,26 @@ class MusicServer(object):
         print("Signal stop")
         self._send_signal(STOP_SIGNAL)
 
+    def signal_pause_all(self):
+        """
+        Signal all the clients to pause playing music.
+
+        Clients will pause playing after receiving the signal and waiting some amount of time synchronized with an
+        NTP server, so that all clients will stop playing together. Waiting threshold is sent with the signal packet.
+        """
+        print("Signal pause")
+        self._send_signal(PAUSE_SIGNAL)
+
+    def signal_unpause_all(self):
+        """
+        Signal all the clients to continue playing music (after pause).
+
+        Clients will unpause playing after receiving the signal and waiting some amount of time synchronized with an
+        NTP server, so that all clients will stop playing together. Waiting threshold is sent with the signal packet.
+        """
+        print("Signal pause")
+        self._send_signal(UNPAUSE_SIGNAL)
+
     def serve_music_file(self, local_file_path: str):
         """
         Serve the given music file to all the clients that don't have it in their repository.
