@@ -8,14 +8,18 @@ if __name__ == "__main__":
     server = NTPServer("0.0.0.0", 123)
     server.start()
     ms.start()
-    while True:
+    stop = False
+    while not stop:
         try:
-            while len(ms.clients) <= 1:
+            while len(ms.clients) <= 0:
                 continue
             ms.serve_music_file(music_file)
             ms.signal_play_all(music_file)
-            time.sleep(10)
+            time.sleep(20)
             ms.signal_stop_all()
             ms.clients = []
+        except KeyboardInterrupt:
+            stop = True
         except:
             print('Some Error has accured')
+    print('Stopped')

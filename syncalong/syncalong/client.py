@@ -1,4 +1,5 @@
 import os
+import threading
 import wx.adv
 import wx
 
@@ -19,7 +20,7 @@ class VERTICAL:
 
 SERVER_IP = '127.0.0.1'
 SERVER_PORT = 22222
-SONGS_PATH = os.path.join(os.path.dirname(__file__), 'Songs')
+SONGS_PATH = os.path.join(os.path.dirname(__file__), 'songs_folder')
 
 class ExamplePanel(wx.Panel):
     def __init__(self, parent):
@@ -109,19 +110,31 @@ class Mp3Panel(wx.Panel):
         self.list_ctrl.InsertColumn(2, 'Album', width=140)
         main_sizer.Add(self.list_ctrl, 0, wx.ALL | wx.EXPAND, 5)
 
+        botton_sizer = wx.BoxSizer(wx.HORIZONTAL)
+
         connect_button = wx.Button(self, label='Connect')
         connect_button.Bind(wx.EVT_BUTTON, self.on_connect)
-        main_sizer.Add(connect_button, 0, wx.ALL | wx.RIGHT, 5)
+        botton_sizer.Add(connect_button, 0, wx.ALL | wx.CENTRE, 5)
+
+        disconnect_button = wx.Button(self, label='DisConnect')
+        disconnect_button.Bind(wx.EVT_BUTTON, self.on_disconnect)
+        botton_sizer.Add(disconnect_button, 0, wx.ALL | wx.CENTRE, 5)
+
+        main_sizer.Add(botton_sizer, 0, wx.ALL | wx.CENTRE, 5)
 
         self.SetSizer(main_sizer)
 
-        self.Centre() 
-        self.Show() 
-        self.Fit()
+        self.client = None
+        self.thr = None
 
     def on_connect(self, event):
-        c = Client(SERVER_IP, SERVER_PORT, SERVER_IP, SONGS_PATH)
-        c.start()
+        self.client = Client(SERVER_IP, SERVER_PORT, SERVER_IP, SONGS_PATH)
+        self.thr = threading.Thread(target=self.client.start, args=(), kwargs={})
+        self.thr.start()
+
+    def on_disconnect(self, event):
+    	import ipdb;ipdb.set_trace()
+    	self.thr.stop = True
 
 
 class Mp3Frame(wx.Frame):    

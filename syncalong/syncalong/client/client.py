@@ -2,6 +2,7 @@ import datetime
 import os
 import socket
 import pygame
+import threading
 
 from common.general_packet import GeneralPacket, handle_packet
 from syncalong.client.timer import wait_for_remote_time
@@ -53,13 +54,20 @@ class Client(object):
 
         All messages received are expected to be of type GeneralPacket.
         """
+        print('in start')
+        my_thread = threading.currentThread()
         self.socket.send(bytes("hello", encoding="utf-8"))
-        while True:
+        import ipdb;ipdb.set_trace()
+        while not getattr(my_thread, 'stop', False):
+            if hasattr(my_thread, 'stop'):
+                print(my_thread.stop)
             recv_packet = GeneralPacket(self.socket.recv())
             handle_packet(recv_packet, {
                 SignalPacket: self._handle_signal,
                 FileSyncPacket: self._handle_file_sync
             })
+        pygame.mixer.music.stop()
+        print('exiting start')
 
     def _handle_play(self, music_file_path):
         """
@@ -94,7 +102,7 @@ class Client(object):
             local_music_file_path = os.path.join(self.music_files_repo, music_file)
             self._handle_play(local_music_file_path)
         elif signal_packet.signal in music_ctl_handlers:
-            music_ctl_handlers[signal_packet]()
+            music_ctl_handlers[signal_packet.signal]()
         else:
             raise UnknownSignalException(signal_packet.signal)
 
