@@ -57,7 +57,6 @@ class Client(object):
         print('in start')
         my_thread = threading.currentThread()
         self.socket.send(bytes("hello", encoding="utf-8"))
-        import ipdb;ipdb.set_trace()
         while not getattr(my_thread, 'stop', False):
             if hasattr(my_thread, 'stop'):
                 print(my_thread.stop)

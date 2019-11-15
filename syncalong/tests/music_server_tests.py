@@ -52,7 +52,7 @@ def test_signal_play_all(_):
         tested_server.signal_play_all(dummy_path)
 
     for mock_client in tested_server.clients:
-        mock_client.send_packet.assert_called_once_with(expected_message)
+        mock_client.send.assert_called_once_with(expected_message)
 
 
 @mock.patch('server.music_server.LengthSocket')
@@ -70,4 +70,4 @@ def test_signal_stop_all(_):
         tested_server.signal_stop_all()
 
     for mock_client in tested_server.clients:
-        mock_client.send_packet.assert_called_once_with(expected_message)
+        mock_client.send.assert_called_once_with(expected_message)
