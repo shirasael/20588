@@ -3,6 +3,7 @@ import os
 import socket
 import pygame
 import threading
+import select
 
 from common.general_packet import GeneralPacket, handle_packet
 from syncalong.client.timer import wait_for_remote_time
@@ -11,6 +12,7 @@ from syncalong.common.length_socket import LengthSocket
 from syncalong.common.file_sync_packet import FileSyncPacket, WHO_HAS, who_has_answer_packet, FILE_SEND
 from syncalong.common.signal_packet import PLAY_SIGNAL, STOP_SIGNAL, SignalPacket, PAUSE_SIGNAL, UNPAUSE_SIGNAL
 
+TIMEOUT = 0.5
 
 class UnknownSignalException(Exception):
     def __init__(self, signal):
@@ -43,9 +45,11 @@ class Client(object):
         if not os.path.exists(self.music_files_repo):
             os.makedirs(self.music_files_repo) 
         self.socket = LengthSocket(socket.AF_INET, socket.SOCK_STREAM)
+        print(f'connecting to {server_ip}:{server_port}')
         self.socket.connect((server_ip, server_port))
         self.media_player = None
-        self.file_list = [None]
+        self.plaing_now = ''
+        self.stop_request = threading.Event()
 
     def start(self):
         """
@@ -54,19 +58,17 @@ class Client(object):
 
         All messages received are expected to be of type GeneralPacket.
         """
-        print('in start')
-        my_thread = threading.currentThread()
         self.socket.send(bytes("hello", encoding="utf-8"))
-        while not getattr(my_thread, 'stop', False):
-            if hasattr(my_thread, 'stop'):
-                print(my_thread.stop)
-            recv_packet = GeneralPacket(self.socket.recv())
-            handle_packet(recv_packet, {
-                SignalPacket: self._handle_signal,
-                FileSyncPacket: self._handle_file_sync
-            })
+        while not self.stop_request.is_set():
+            sock , _ , _  = select.select([self.socket], [], [], TIMEOUT)
+            if sock:
+                recv_packet = GeneralPacket(sock[0].recv())
+                handle_packet(recv_packet, {
+                    SignalPacket: self._handle_signal,
+                    FileSyncPacket: self._handle_file_sync
+                })
         pygame.mixer.music.stop()
-        print('exiting start')
+        self.socket.close()
 
     def _handle_play(self, music_file_path):
         """
@@ -75,8 +77,8 @@ class Client(object):
         """
         print("Playing {}".format(music_file_path))
         pygame.mixer.music.load(music_file_path)
+        self.plaing_now = os.path.basename(music_file_path)
         pygame.mixer.music.play()
-        self.file_list.pop(0)
 
 
     def _handle_signal(self, signal_packet: SignalPacket):
@@ -130,4 +132,3 @@ class Client(object):
                     data = self.socket.recv(read_size)
                     received += len(data)
                     local_file.write(data)
-            self.file_list.append(local_path)

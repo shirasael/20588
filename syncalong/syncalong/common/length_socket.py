@@ -93,12 +93,11 @@ def send_to_all(sockets: List[LengthSocket], packets):
     :param sockets: Sockets to send the packets to.
     :param packets: Packets to be sent to all clients.
     """
-    sending_sockets = [s for s in sockets]
     for packet in packets:
-        for s in sending_sockets:
+        for s in sockets:
             try:
                 s.send(packet)
             except (Exception, socket.error) as e:
                 print(f"Could not send packets to {s}: {e}")
                 print(f"Stopping transmit to {s}")
-                sending_sockets.remove(s)
+                sockets.remove(s)

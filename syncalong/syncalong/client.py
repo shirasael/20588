@@ -4,82 +4,16 @@ import wx.adv
 import wx
 
 from client.client import Client
+from gui_general import HORIZONTAL, VERTICAL, PORT_VALID_CHARS, check_valid_data
 
 TRAY_TOOLTIP = 'Name'
 TRAY_ICON = './gui/icon.png'
 
 
-## Settings panel posisions
-class HORIZONTAL:
-    TEXT = 20
-    TEXT_CTRL = 150
-
-
-class VERTICAL:
-    FIRST_LINE = 0
-    SECOND_LINE = 30
-    THIRD_LINE = 60
-
-
 SERVER_IP = '127.0.0.1'
 SERVER_PORT = 22222
-SONGS_PATH = os.path.join(os.path.dirname(__file__), 'songs_folder')
-
-
-class ExamplePanel(wx.Panel):
-    def __init__(self, parent):
-        wx.Panel.__init__(self, parent)
-        self.quote = wx.StaticText(self, label="Your quote :", pos=(20, 30))
-
-        # A multiline TextCtrl - This is here to show how the events work in this program, don't pay too much attention to it
-        self.logger = wx.TextCtrl(self, pos=(300, 20), size=(200, 300), style=wx.TE_MULTILINE | wx.TE_READONLY)
-
-        # A button
-        self.button = wx.Button(self, label="Save", pos=(200, 325))
-        self.Bind(wx.EVT_BUTTON, self.OnClick, self.button)
-
-        # the edit control - one line version.
-        self.lblname = wx.StaticText(self, label="Your name :", pos=(20, 60))
-        self.editname = wx.TextCtrl(self, value="Enter here your name", pos=(150, 60), size=(140, -1))
-        self.Bind(wx.EVT_TEXT, self.EvtText, self.editname)
-        self.Bind(wx.EVT_CHAR, self.EvtChar, self.editname)
-
-        # the combobox Control
-        self.sampleList = ['friends', 'advertising', 'web search', 'Yellow Pages']
-        self.lblhear = wx.StaticText(self, label="How did you hear from us ?", pos=(20, 90))
-        self.edithear = wx.ComboBox(self, pos=(150, 90), size=(95, -1), choices=self.sampleList, style=wx.CB_DROPDOWN)
-        self.Bind(wx.EVT_COMBOBOX, self.EvtComboBox, self.edithear)
-        self.Bind(wx.EVT_TEXT, self.EvtText, self.edithear)
-
-        # Checkbox
-        self.insure = wx.CheckBox(self, label="Do you want Insured Shipment ?", pos=(20, 180))
-        self.Bind(wx.EVT_CHECKBOX, self.EvtCheckBox, self.insure)
-
-        # Radio Boxes
-        radioList = ['blue', 'red', 'yellow', 'orange', 'green', 'purple', 'navy blue', 'black', 'gray']
-        rb = wx.RadioBox(self, label="What color would you like ?", pos=(20, 210), choices=radioList, majorDimension=3,
-                         style=wx.RA_SPECIFY_COLS)
-        self.Bind(wx.EVT_RADIOBOX, self.EvtRadioBox, rb)
-
-    def EvtRadioBox(self, event):
-        self.logger.AppendText('EvtRadioBox: %d\n' % event.GetInt())
-
-    def EvtComboBox(self, event):
-        self.logger.AppendText('EvtComboBox: %s\n' % event.GetString())
-
-    def OnClick(self, event):
-        self.logger.AppendText(" Click on object with Id %d\n" % event.GetId())
-
-    def EvtText(self, event):
-        self.logger.AppendText('EvtText: %s\n' % event.GetString())
-
-    def EvtChar(self, event):
-        self.logger.AppendText('EvtChar: %d\n' % event.GetKeyCode())
-        event.Skip()
-
-    def EvtCheckBox(self, event):
-        self.logger.AppendText('EvtCheckBox: %d\n' % event.Checked())
-
+SONGS_PATH = ''
+DEFAULT_SONGS_PATH = os.path.join(os.path.dirname(__file__), 'songs_folder')
 
 class SettingsPanel(wx.Panel):
     def __init__(self, parent):
@@ -92,22 +26,29 @@ class SettingsPanel(wx.Panel):
 
         self.server_port = wx.StaticText(self, label="Server port", pos=(HORIZONTAL.TEXT, VERTICAL.SECOND_LINE))
         self.server_port_text = wx.TextCtrl(self, value=str(SERVER_PORT),
-                                            pos=(HORIZONTAL.TEXT_CTRL, VERTICAL.SECOND_LINE), size=(140, -1))
+                                            pos=(HORIZONTAL.TEXT_CTRL, VERTICAL.SECOND_LINE), size=(210, -1))
         self.Bind(wx.EVT_TEXT, self.on_set_port, self.server_port_text)
 
         self.songs_path = wx.StaticText(self, label="Local songs path", pos=(HORIZONTAL.TEXT, VERTICAL.THIRD_LINE))
-        self.songs_path_text = wx.TextCtrl(self, value=str(SONGS_PATH), pos=(HORIZONTAL.TEXT_CTRL, VERTICAL.THIRD_LINE),
-                                           size=(200, -1))
+        self.songs_path_text = wx.TextCtrl(self, value=str(DEFAULT_SONGS_PATH), pos=(HORIZONTAL.TEXT_CTRL, VERTICAL.THIRD_LINE),
+                                           size=(210, -1))
         self.Bind(wx.EVT_TEXT, self.on_set_path, self.songs_path_text)
 
     def on_set_ip(self, event):
+        global SERVER_IP
         SERVER_IP = event.GetString()
 
     def on_set_port(self, event):
-        SERVER_PORT = event.GetInt()
+        global SERVER_PORT
+        data = check_valid_data(event.GetString(), PORT_VALID_CHARS)
+        if data and int(data) < 2**16 and int(data) > 0:
+            SERVER_PORT = int(data)
+        else:
+            self.server_port_text.SetValue(f'Port should be between 0 to {2**16}')
 
     def on_set_path(self, event):
-        SONGS_PATH = event.GetInt()
+        global SONGS_PATH
+        SONGS_PATH = event.GetString()
 
 
 class Mp3Panel(wx.Panel):
@@ -115,14 +56,10 @@ class Mp3Panel(wx.Panel):
         super().__init__(parent)
         main_sizer = wx.BoxSizer(wx.VERTICAL)
 
-        self.list_ctrl = wx.ListCtrl(
-            self, size=(-1, 100),
-            style=wx.LC_REPORT | wx.BORDER_SUNKEN
-        )
-        self.list_ctrl.InsertColumn(0, 'Title', width=200)
-        self.list_ctrl.InsertColumn(1, 'Artist', width=140)
-        self.list_ctrl.InsertColumn(2, 'Album', width=140)
-        main_sizer.Add(self.list_ctrl, 0, wx.ALL | wx.EXPAND, 5)
+        song_name = wx.StaticText(self, label="Title")
+        self.plaing_song = wx.TextCtrl(self, value="", size=(-1,100), style=wx.LC_REPORT | wx.BORDER_SUNKEN | wx.TE_READONLY)
+        main_sizer.Add(song_name, 0, wx.ALL | wx.EXPAND, 5)
+        main_sizer.Add(self.plaing_song, 0, wx.ALL | wx.EXPAND, 5)
 
         botton_sizer = wx.BoxSizer(wx.HORIZONTAL)
 
@@ -134,46 +71,83 @@ class Mp3Panel(wx.Panel):
         disconnect_button.Bind(wx.EVT_BUTTON, self.on_disconnect)
         botton_sizer.Add(disconnect_button, 0, wx.ALL | wx.CENTRE, 5)
 
+        refresh_button = wx.Button(self, label='Refresh')
+        refresh_button.Bind(wx.EVT_BUTTON, self.on_refresh)
+        botton_sizer.Add(refresh_button, 0, wx.ALL | wx.CENTRE, 5)
+
+        self.timer = wx.Timer(self)
+        self.Bind(wx.EVT_TIMER, self.on_refresh)
+
         main_sizer.Add(botton_sizer, 0, wx.ALL | wx.CENTRE, 5)
 
         self.SetSizer(main_sizer)
 
         self.client = None
         self.thr = None
+        self.connected = False
+        self.plaing_now = ''
 
     def on_connect(self, event):
-        self.client = Client(SERVER_IP, SERVER_PORT, SERVER_IP, SONGS_PATH)
-        self.thr = threading.Thread(target=self.client.start, args=(), kwargs={})
-        self.thr.start()
+        if not self.connected:
+            if SERVER_IP and SERVER_PORT:
+                print('Connect')
+                songs_path = SONGS_PATH if SONGS_PATH else DEFAULT_SONGS_PATH
+                try:
+                    self.client = Client(SERVER_IP, SERVER_PORT, SERVER_IP, songs_path)
+                except:
+                    wx.MessageBox('Could not connect to server, try again or change server ip/port')
+                    return
+                self.thr = threading.Thread(target=self.client.start, args=(), kwargs={})
+                self.thr.start()
+                self.connected = True
+                self.timer.Start(500)
+            else:
+                wx.MessageBox('Must set the ip and port before connecting to a server')                
 
     def on_disconnect(self, event):
-        self.thr.stop = True
+        if self.connected:
+            print('DisConnect')
+            self.client.stop_request.set()
+            self.connected = False
+            self.timer.Stop()
+
+    def on_refresh(self, event):
+        if self.connected and self.client.plaing_now != self.plaing_now:
+            print('refresh')
+            self.plaing_song.SetValue(self.client.plaing_now)
+            self.plaing_now = self.client.plaing_now
+        elif not self.connected:
+            print("refresh not connected")
+            self.plaing_song.SetValue('')
 
 
 class Mp3Frame(wx.Frame):
     def __init__(self):
-        super().__init__(parent=None,
-                         title='SyncAlong')
+        super().__init__(parent=None, title='SyncAlong', size=(400,250))
         # self.panel = Mp3Panel(self)
         panel = wx.Panel(self)
 
         notebook = wx.Notebook(panel)
 
-        mp3_panel = Mp3Panel(notebook)
+        self.mp3_panel = Mp3Panel(notebook)
         settings_panel = SettingsPanel(notebook)
-        ex_panel = ExamplePanel(notebook)
 
-        notebook.AddPage(mp3_panel, 'Main')
+        notebook.AddPage(self.mp3_panel, 'Main')
         notebook.AddPage(settings_panel, 'Setting')
-        notebook.AddPage(ex_panel, 'test')
 
         sizer = wx.BoxSizer()
         sizer.Add(notebook, 1, wx.ALL | wx.EXPAND)
         panel.SetSizer(sizer)
 
-        self.Centre()
-        self.Show()
-        self.Fit()
+        self.Bind(wx.EVT_CLOSE, self.on_close)
+
+    def on_close(self, event):
+        self.Hide()
+
+    def my_close(self):
+        self.Hide()
+        self.mp3_panel.on_disconnect(None)
+        self.Destroy()
 
 
 def create_menu_item(menu, label, func):
@@ -181,11 +155,6 @@ def create_menu_item(menu, label, func):
     menu.Bind(wx.EVT_MENU, func, id=item.GetId())
     menu.Append(item)
     return item
-
-
-def create_window(frameType):
-    frame = frameType()
-    return frame
 
 
 class TaskBarIcon(wx.adv.TaskBarIcon):
@@ -210,16 +179,16 @@ class TaskBarIcon(wx.adv.TaskBarIcon):
         print('Tray icon was left-clicked.')
 
     def on_show_window(self, event):
-        create_window(Mp3Frame).Show()
+        self.frame.Show()
 
     def on_exit(self, event):
         wx.CallAfter(self.Destroy)
-        self.frame.Close()
+        self.frame.my_close()
 
 
 class App(wx.App):
     def OnInit(self):
-        frame = create_window(Mp3Frame)
+        frame = Mp3Frame()
         self.SetTopWindow(frame)
         TaskBarIcon(frame)
         frame.Show()

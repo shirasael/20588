@@ -26,27 +26,25 @@ class RecvClientsThread(threading.Thread):
         super().__init__()
         self.listening_socket = listening_socket
         self.on_recv_callback = on_recv_callback
-        self.should_stop = False
+        self.should_stop = threading.Event()
 
     def run(self):
         """
         Accept a new client and call the callback, endlessly, or until `stop` is called.
         Note that there is no timeout for accepting clients.
         """
-        while not self.should_stop:
+        while not self.should_stop.is_set():
             try:
                 conn, address = self.listening_socket.accept()
                 data = conn.recv(len('hello'))
                 self.on_recv_callback(data, conn, address)
+            except (Exception, OSError) as e:
+                if e.errno == 10038:
+                    break
+                raise
             except (Exception, socket.error) as e:
                 print(f"An error occured on server thread: {e}")
                 raise
-
-    def stop(self):
-        """
-        Stop the thread from accepting new client.
-        """
-        self.should_stop = True
 
 
 class MusicServer(object):
@@ -71,11 +69,16 @@ class MusicServer(object):
         self.recv_thread = RecvClientsThread(self.server_socket,
                                              lambda data, conn, addr: self.clients.append(conn))
 
+    def close(self):
+        self.stop()
+        self.server_socket.close()
+        print('music server closed')
+        return None
+
     def start(self):
         """
         Run the server and start accepting clients.
         """
-        self.recv_thread.should_stop = False
         if not self.recv_thread.is_alive():
             self.recv_thread.start()
 
@@ -185,5 +188,5 @@ class MusicServer(object):
         """
         Stop the server from accepting clients.
         """
-        self.recv_thread.stop()
+        self.recv_thread.should_stop.set()
 
