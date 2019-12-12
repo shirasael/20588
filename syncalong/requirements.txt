@@ -1,4 +1,6 @@
+wxPython==4.0.6
 ntplib==0.3.3
 pygame==1.9.6
 scapy==2.4.3
 mock==3.0.5
+mutagen=1.43.0

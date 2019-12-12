@@ -274,7 +274,7 @@ class WorkThread(threading.Thread):
     def run(self):
         while not self.should_stop:
             try:
-                data, addr, recv_timestamp = self.task_queue.get(timeout=10)  # will generate an exception
+                data, addr, recv_timestamp = self.task_queue.get(timeout=2)  # will generate an exception
                 recv_packet = NTPPacket(version=4, mode=3)  # we know this is version 4, client mode
                 recv_packet.from_data(data)
                 time_stamp_high, time_stamp_low = recv_packet.get_tx_time_stamp()
@@ -309,13 +309,13 @@ class NTPServer(object):
         self.work_thread = None
 
     def start(self):
-        ntp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        ntp_socket.bind((self.ip, self.port))
-        print("Starting NTP server socket: {} ".format(ntp_socket.getsockname()))
+        self.ntp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.ntp_socket.bind((self.ip, self.port))
+        print("Starting NTP server socket: {} ".format(self.ntp_socket.getsockname()))
 
-        self.recv_thread = RecvThread(ntp_socket, self.task_queue)
+        self.recv_thread = RecvThread(self.ntp_socket, self.task_queue)
         self.recv_thread.start()
-        self.work_thread = WorkThread(ntp_socket, self.task_queue)
+        self.work_thread = WorkThread(self.ntp_socket, self.task_queue)
         self.work_thread.start()
 
     def stop(self):
@@ -325,6 +325,12 @@ class NTPServer(object):
         self.recv_thread.join()
         self.work_thread.join()
         print("NTP server stopped!")
+
+    def close(self):
+        self.stop()
+        self.ntp_socket.close()
+        print('ntp server closed')
+        return None
 
 
 if __name__ == "__main__":
