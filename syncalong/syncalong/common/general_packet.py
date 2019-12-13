@@ -66,28 +66,3 @@ def generate_packet(pkt) -> GeneralPacket:
     )
     gp.__setattr__(pkt._name, pkt)
     return gp
-
-
-if __name__ == "__main__":
-    print("Testing general packet")
-
-    sp = SignalPacket(signal=0,
-                      send_timestamp=123,
-                      wait_seconds=4,
-                      music_file_name="")
-
-    g = generate_packet(sp)
-
-    print(g.show())
-    r = raw(g)
-    print(r)
-    gg = GeneralPacket(r)
-    print(gg.show())
-    print(gg.layer_type)
-
-    print("-----")
-
-    handle_packet(gg, {
-        SignalPacket: lambda pkt: print(pkt.send_timestamp),
-        FileSyncPacket: lambda pkt: print(pkt.file_name)
-    })
