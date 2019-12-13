@@ -1,17 +1,16 @@
 import os
 import wx
-import wx.lib.mixins.listctrl  as  listmix
+import wx.lib.mixins.listctrl as listmix
 from mutagen.mp3 import MP3
 
 from server.music_server import MusicServer
 from server.ntp_server import NTPServer
-from common.signal_packet import DEFAULT_WAIT_SECONDS
 
 from gui_general import HORIZONTAL, VERTICAL, PORT_VALID_CHARS, check_valid_data
 
-
 SERVER_PORT = 22222
 SONGS_PATH = os.path.join(os.path.dirname(__file__), 'songs_folder')
+
 
 class FileDrop(wx.FileDropTarget):
     def __init__(self, window):
@@ -34,17 +33,17 @@ class EditableListCtrl(wx.ListCtrl, listmix.TextEditMixin):
 
     def on_rightclick(self, event):
         self.menu_title_by_id = {wx.NewId(): ("Remove from list", (lambda *args: None)),
-                            wx.NewId(): ("Move Down", self.move_down),
-                            wx.NewId(): ("Move Up", self.move_up),
-                            wx.NewId(): ("Move to Start", self.move_to_start),
-                            wx.NewId(): ("Move to End", self.move_to_end)}
+                                 wx.NewId(): ("Move Down", self.move_down),
+                                 wx.NewId(): ("Move Up", self.move_up),
+                                 wx.NewId(): ("Move to Start", self.move_to_start),
+                                 wx.NewId(): ("Move to End", self.move_to_end)}
 
         self.item = event.GetItem()
 
         menu = wx.Menu()
-        for id,(title,_) in self.menu_title_by_id.items():
-            menu.Append( id, title )
-            wx.EVT_MENU( menu, id, self.MenuSelectionCb )
+        for id, (title, _) in self.menu_title_by_id.items():
+            menu.Append(id, title)
+            wx.EVT_MENU(menu, id, self.MenuSelectionCb)
 
         self.PopupMenu(menu, event.GetPoint())
         menu.Destroy()
@@ -54,10 +53,10 @@ class EditableListCtrl(wx.ListCtrl, listmix.TextEditMixin):
         self.menu_title_by_id[event.GetId()][1]()
 
     def move_down(self):
-        self.InsertItem(self.item.GetId()+1, self.item.GetText())
+        self.InsertItem(self.item.GetId() + 1, self.item.GetText())
 
     def move_up(self):
-        self.InsertItem(self.item.GetId()-1, self.item.GetText())
+        self.InsertItem(self.item.GetId() - 1, self.item.GetText())
 
     def move_to_start(self):
         self.InsertItem(0, self.item.GetText())
@@ -80,14 +79,13 @@ class SettingsPanel(wx.Panel):
                                            size=(210, -1))
         self.Bind(wx.EVT_TEXT, self.on_set_path, self.songs_path_text)
 
-
     def on_set_port(self, event):
         global SERVER_PORT
         data = check_valid_data(event.GetString(), PORT_VALID_CHARS)
-        if data and int(data) < 2**16 and int(data) > 0:
+        if data and int(data) < 2 ** 16 and int(data) > 0:
             SERVER_PORT = int(data)
         else:
-            self.server_port_text.SetValue(f'Port should be between 1 to {2**16-1}')
+            self.server_port_text.SetValue(f'Port should be between 1 to {2 ** 16 - 1}')
         print(SERVER_PORT)
 
     def on_set_path(self, event):
@@ -106,7 +104,7 @@ class Mp3Panel(wx.Panel):
         )
         self.list_ctrl.InsertColumn(0, 'Song Path', width=200)
 
-        dt = FileDrop(self.list_ctrl)        
+        dt = FileDrop(self.list_ctrl)
         self.list_ctrl.SetDropTarget(dt)
         main_sizer.Add(self.list_ctrl, 0, wx.ALL | wx.EXPAND, 5)
 
@@ -180,7 +178,7 @@ class Mp3Panel(wx.Panel):
                 self.timer_time_left = 0
             else:
                 self.timer_time_left = self.timer.GetInterval()
-                self.music_s.signal_pause_all()      
+                self.music_s.signal_pause_all()
             self.paused = not self.paused
 
     def on_play_next(self, event):
@@ -195,9 +193,9 @@ class Mp3Panel(wx.Panel):
             song = self.list_ctrl.GetItem(0)
             self.music_s.serve_music_file(song.GetText())
             self.music_s.signal_play_all(song.GetText())
-            song_length = MP3(song.GetText()).info.length*1000
+            song_length = MP3(song.GetText()).info.length * 1000
             print(song_length)
-            self.timer.StartOnce(song_length) # Timer works with milliseconds and MP3 works with Seconds
+            self.timer.StartOnce(song_length)  # Timer works with milliseconds and MP3 works with Seconds
             self.list_ctrl.DeleteItem(song.GetId())
         else:
             self.timer.StartOnce(1000)
@@ -208,11 +206,11 @@ class Mp3Panel(wx.Panel):
                 path = os.path.join(dirname, file)
                 if MP3(path):
                     self.list_ctrl.InsertItem(self.list_ctrl.ItemCount, path)
-        
+
 
 class Mp3Frame(wx.Frame):
     def __init__(self):
-        super().__init__(parent=None, title='SyncAlong', size=(500,650))
+        super().__init__(parent=None, title='SyncAlong', size=(500, 650))
         panel = wx.Panel(self)
 
         notebook = wx.Notebook(panel)
@@ -233,6 +231,7 @@ class Mp3Frame(wx.Frame):
         self.Hide()
         self.mp3_panel.on_stop(event)
         self.Destroy()
+
 
 class App(wx.App):
     def OnInit(self):
