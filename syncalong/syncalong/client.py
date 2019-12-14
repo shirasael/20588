@@ -1,4 +1,5 @@
 import os
+import json
 import threading
 import wx.adv
 import wx
@@ -8,47 +9,62 @@ from gui_general import HORIZONTAL, VERTICAL, PORT_VALID_CHARS, check_valid_data
 
 TRAY_TOOLTIP = 'Name'
 TRAY_ICON = './gui/icon.png'
+CONFIG_PATH = './client/conf.json'
 
-
-SERVER_IP = '127.0.0.1'
-SERVER_PORT = 22222
-SONGS_PATH = ''
-DEFAULT_SONGS_PATH = os.path.join(os.path.dirname(__file__), 'songs_folder')
+CONF = None
 
 class SettingsPanel(wx.Panel):
     def __init__(self, parent):
         super().__init__(parent)
 
+        self.read_config()
+
         self.server_ip = wx.StaticText(self, label="Server ip", pos=(HORIZONTAL.TEXT, VERTICAL.FIRST_LINE))
-        self.server_ip_text = wx.TextCtrl(self, value="Enter Server ip",
+        self.server_ip_text = wx.TextCtrl(self, value=CONF['ServerIp'],
                                           pos=(HORIZONTAL.TEXT_CTRL, VERTICAL.FIRST_LINE), size=(140, -1))
         self.Bind(wx.EVT_TEXT, self.on_set_ip, self.server_ip_text)
 
         self.server_port = wx.StaticText(self, label="Server port", pos=(HORIZONTAL.TEXT, VERTICAL.SECOND_LINE))
-        self.server_port_text = wx.TextCtrl(self, value=str(SERVER_PORT),
+        self.server_port_text = wx.TextCtrl(self, value=str(CONF["ServerPort"]),
                                             pos=(HORIZONTAL.TEXT_CTRL, VERTICAL.SECOND_LINE), size=(210, -1))
         self.Bind(wx.EVT_TEXT, self.on_set_port, self.server_port_text)
 
         self.songs_path = wx.StaticText(self, label="Local songs path", pos=(HORIZONTAL.TEXT, VERTICAL.THIRD_LINE))
-        self.songs_path_text = wx.TextCtrl(self, value=str(DEFAULT_SONGS_PATH), pos=(HORIZONTAL.TEXT_CTRL, VERTICAL.THIRD_LINE),
+        self.songs_path_text = wx.TextCtrl(self, value=str(CONF["SongsPath"]), pos=(HORIZONTAL.TEXT_CTRL, VERTICAL.THIRD_LINE),
                                            size=(210, -1))
         self.Bind(wx.EVT_TEXT, self.on_set_path, self.songs_path_text)
 
+        save_button = wx.Button(self, label='Save config', pos=(HORIZONTAL.TEXT, VERTICAL.FORTH_LINE))
+        save_button.Bind(wx.EVT_BUTTON, self.on_save)
+
     def on_set_ip(self, event):
-        global SERVER_IP
-        SERVER_IP = event.GetString()
+        CONF["ServerIp"] = event.GetString()
 
     def on_set_port(self, event):
-        global SERVER_PORT
         data = check_valid_data(event.GetString(), PORT_VALID_CHARS)
         if data and int(data) < 2**16 and int(data) > 0:
-            SERVER_PORT = int(data)
+            CONF["ServerPort"] = int(data)
         else:
             self.server_port_text.SetValue(f'Port should be between 0 to {2**16}')
 
     def on_set_path(self, event):
-        global SONGS_PATH
-        SONGS_PATH = event.GetString()
+        CONF["SongsPath"] = event.GetString()
+
+    def on_save(self, event):
+        with open(CONFIG_PATH, 'w') as f:
+            json.dump(CONF, f)
+
+    def read_config(self):
+        global CONF
+        try:
+            with open(CONFIG_PATH, 'r') as f:
+                CONF = json.load(f)
+        except:
+            CONF = {"ServerIp": "",
+                    "ServerPort": "22222",
+                    "SongsPath": "./songs_folder"}
+            self.on_save(None)
+
 
 
 class Mp3Panel(wx.Panel):
@@ -63,17 +79,9 @@ class Mp3Panel(wx.Panel):
 
         botton_sizer = wx.BoxSizer(wx.HORIZONTAL)
 
-        connect_button = wx.Button(self, label='Connect')
+        connect_button = wx.Button(self, label='Connect/DisConnect')
         connect_button.Bind(wx.EVT_BUTTON, self.on_connect)
         botton_sizer.Add(connect_button, 0, wx.ALL | wx.CENTRE, 5)
-
-        disconnect_button = wx.Button(self, label='DisConnect')
-        disconnect_button.Bind(wx.EVT_BUTTON, self.on_disconnect)
-        botton_sizer.Add(disconnect_button, 0, wx.ALL | wx.CENTRE, 5)
-
-        refresh_button = wx.Button(self, label='Refresh')
-        refresh_button.Bind(wx.EVT_BUTTON, self.on_refresh)
-        botton_sizer.Add(refresh_button, 0, wx.ALL | wx.CENTRE, 5)
 
         self.timer = wx.Timer(self)
         self.Bind(wx.EVT_TIMER, self.on_refresh)
@@ -89,11 +97,10 @@ class Mp3Panel(wx.Panel):
 
     def on_connect(self, event):
         if not self.connected:
-            if SERVER_IP and SERVER_PORT:
+            if CONF["ServerIp"] and CONF["ServerPort"]:
                 print('Connect')
-                songs_path = SONGS_PATH if SONGS_PATH else DEFAULT_SONGS_PATH
                 try:
-                    self.client = Client(SERVER_IP, SERVER_PORT, SERVER_IP, songs_path)
+                    self.client = Client(CONF["ServerIp"], CONF["ServerPort"], CONF["ServerIp"], CONF["SongsPath"])
                 except:
                     wx.MessageBox('Could not connect to server, try again or change server ip/port')
                     return
@@ -102,10 +109,8 @@ class Mp3Panel(wx.Panel):
                 self.connected = True
                 self.timer.Start(500)
             else:
-                wx.MessageBox('Must set the ip and port before connecting to a server')                
-
-    def on_disconnect(self, event):
-        if self.connected:
+                wx.MessageBox('Must set the ip and port before connecting to a server')
+        else:
             print('DisConnect')
             self.client.stop_request.set()
             self.connected = False
@@ -129,11 +134,11 @@ class Mp3Frame(wx.Frame):
 
         notebook = wx.Notebook(panel)
 
+        settings_panel = SettingsPanel(notebook) # Setting need to be created before other pages
         self.mp3_panel = Mp3Panel(notebook)
-        settings_panel = SettingsPanel(notebook)
 
         notebook.AddPage(self.mp3_panel, 'Main')
-        notebook.AddPage(settings_panel, 'Setting')
+        notebook.AddPage(settings_panel, 'Settings')
 
         sizer = wx.BoxSizer()
         sizer.Add(notebook, 1, wx.ALL | wx.EXPAND)
@@ -146,7 +151,8 @@ class Mp3Frame(wx.Frame):
 
     def my_close(self):
         self.Hide()
-        self.mp3_panel.on_disconnect(None)
+        if self.mp3_panel.connected:
+            self.mp3_panel.on_connect(None)
         self.Destroy()
 
 

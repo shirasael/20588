@@ -1,4 +1,5 @@
 import os
+import json
 import wx
 import wx.lib.mixins.listctrl as listmix
 from mutagen.mp3 import MP3
@@ -8,8 +9,8 @@ from server.ntp_server import NTPServer
 
 from gui_general import HORIZONTAL, VERTICAL, PORT_VALID_CHARS, check_valid_data
 
-SERVER_PORT = 22222
-SONGS_PATH = os.path.join(os.path.dirname(__file__), 'songs_folder')
+CONFIG_PATH = './server/conf.json'
+CONF = None
 
 
 class FileDrop(wx.FileDropTarget):
@@ -69,28 +70,44 @@ class SettingsPanel(wx.Panel):
     def __init__(self, parent):
         super().__init__(parent)
 
+        self.read_config()
+
         self.server_port = wx.StaticText(self, label="Server port", pos=(HORIZONTAL.TEXT, VERTICAL.SECOND_LINE))
-        self.server_port_text = wx.TextCtrl(self, value=str(SERVER_PORT),
+        self.server_port_text = wx.TextCtrl(self, value=str(CONF["ServerPort"]),
                                             pos=(HORIZONTAL.TEXT_CTRL, VERTICAL.SECOND_LINE), size=(210, -1))
         self.Bind(wx.EVT_TEXT, self.on_set_port, self.server_port_text)
 
         self.songs_path = wx.StaticText(self, label="Local songs path", pos=(HORIZONTAL.TEXT, VERTICAL.THIRD_LINE))
-        self.songs_path_text = wx.TextCtrl(self, value=str(SONGS_PATH), pos=(HORIZONTAL.TEXT_CTRL, VERTICAL.THIRD_LINE),
+        self.songs_path_text = wx.TextCtrl(self, value=str(CONF["SongsPath"]), pos=(HORIZONTAL.TEXT_CTRL, VERTICAL.THIRD_LINE),
                                            size=(210, -1))
         self.Bind(wx.EVT_TEXT, self.on_set_path, self.songs_path_text)
 
+        save_button = wx.Button(self, label='Save config', pos=(HORIZONTAL.TEXT, VERTICAL.FORTH_LINE))
+        save_button.Bind(wx.EVT_BUTTON, self.on_save)
+
     def on_set_port(self, event):
-        global SERVER_PORT
         data = check_valid_data(event.GetString(), PORT_VALID_CHARS)
         if data and int(data) < 2 ** 16 and int(data) > 0:
-            SERVER_PORT = int(data)
+            CONF["ServerPort"] = int(data)
         else:
             self.server_port_text.SetValue(f'Port should be between 1 to {2 ** 16 - 1}')
-        print(SERVER_PORT)
 
     def on_set_path(self, event):
-        global SONGS_PATH
-        SONGS_PATH = event.GetString()
+        CONF["SongsPath"] = event.GetString()
+
+    def on_save(self, event):
+        with open(CONFIG_PATH, 'w') as f:
+            json.dump(CONF, f)
+
+    def read_config(self):
+        global CONF
+        try:
+            with open(CONFIG_PATH, 'r') as f:
+                CONF = json.load(f)
+        except:
+            CONF = {"ServerPort": "22222",
+                    "SongsPath": "./songs_folder"}
+            self.on_save(None)
 
 
 class Mp3Panel(wx.Panel):
@@ -99,7 +116,7 @@ class Mp3Panel(wx.Panel):
         main_sizer = wx.BoxSizer(wx.VERTICAL)
 
         self.list_ctrl = EditableListCtrl(
-            self, size=(-1, 500),
+            self, size=(-1, 150),
             style=wx.LC_REPORT | wx.BORDER_SUNKEN
         )
         self.list_ctrl.InsertColumn(0, 'Song Path', width=200)
@@ -145,10 +162,9 @@ class Mp3Panel(wx.Panel):
     def on_start(self, event):
         print('start')
         if not self.running:
-            print(SERVER_PORT)
-            if SERVER_PORT:
+            if CONF["ServerPort"]:
                 if not self.music_s:
-                    self.music_s = MusicServer("0.0.0.0", SERVER_PORT)
+                    self.music_s = MusicServer("0.0.0.0", CONF["ServerPort"])
                 if not self.ntp_s:
                     self.ntp_s = NTPServer("0.0.0.0", 123)
                 self.ntp_s.start()
@@ -199,7 +215,7 @@ class Mp3Panel(wx.Panel):
             self.timer.StartOnce(1000)
 
     def initialize_songs_list(self):
-        for dirname, _, files in os.walk(SONGS_PATH):
+        for dirname, _, files in os.walk(CONF["SongsPath"]):
             for file in files:
                 path = os.path.join(dirname, file)
                 if MP3(path):
@@ -208,16 +224,16 @@ class Mp3Panel(wx.Panel):
 
 class Mp3Frame(wx.Frame):
     def __init__(self):
-        super().__init__(parent=None, title='SyncAlong', size=(500, 650))
+        super().__init__(parent=None, title='SyncAlong', size=(500, 280))
         panel = wx.Panel(self)
 
         notebook = wx.Notebook(panel)
 
+        settings_panel = SettingsPanel(notebook) # Setting need to be created before other pages
         self.mp3_panel = Mp3Panel(notebook)
-        settings_panel = SettingsPanel(notebook)
 
         notebook.AddPage(self.mp3_panel, 'Main')
-        notebook.AddPage(settings_panel, 'Setting')
+        notebook.AddPage(settings_panel, 'Settings')
 
         sizer = wx.BoxSizer()
         sizer.Add(notebook, 1, wx.ALL | wx.EXPAND)

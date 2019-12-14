@@ -1,3 +1,5 @@
+import json
+
 ## Settings panel posisions
 class HORIZONTAL:
     TEXT = 20
@@ -8,6 +10,7 @@ class VERTICAL:
     FIRST_LINE = 0
     SECOND_LINE = 30
     THIRD_LINE = 60
+    FORTH_LINE = 90
 
 PORT_VALID_CHARS = '0123456789'
 
