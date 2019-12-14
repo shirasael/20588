@@ -1,1 +1,1 @@
-{"ServerIp": "", "ServerPort": 22222, "SongsPath": "./songs_folder"}
+{"ServerIp": "127.0.0.1", "ServerPort": 22222, "SongsPath": "./songs_folder"}
