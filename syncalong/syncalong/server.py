@@ -184,7 +184,7 @@ class Mp3Panel(wx.Panel):
     def on_play_next(self, event):
         print('play next')
         if self.running:
-            self.on_stop(event)
+            self.timer.Stop()
             self.on_play_trigger(event)
 
     def on_play_trigger(self, event):
@@ -193,9 +193,7 @@ class Mp3Panel(wx.Panel):
             song = self.list_ctrl.GetItem(0)
             self.music_s.serve_music_file(song.GetText())
             self.music_s.signal_play_all(song.GetText())
-            song_length = MP3(song.GetText()).info.length * 1000
-            print(song_length)
-            self.timer.StartOnce(song_length)  # Timer works with milliseconds and MP3 works with Seconds
+            self.timer.StartOnce(MP3(song.GetText()).info.length * 1000)  # Timer works with milliseconds and MP3 works with Seconds
             self.list_ctrl.DeleteItem(song.GetId())
         else:
             self.timer.StartOnce(1000)
