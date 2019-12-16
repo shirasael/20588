@@ -2,8 +2,8 @@ import os
 import time
 import mock
 from datetime import datetime
-from common.signal_packet import SignalPacket, PLAY_SIGNAL, DEFAULT_WAIT_SECONDS, STOP_SIGNAL
-from server.music_server import MusicServer
+from syncalong.common.signal_packet import SignalPacket, PLAY_SIGNAL, DEFAULT_WAIT_SECONDS, STOP_SIGNAL
+from syncalong.server.music_server import MusicServer
 
 
 def call_counter(func):

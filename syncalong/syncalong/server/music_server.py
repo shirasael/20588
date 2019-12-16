@@ -1,10 +1,9 @@
 import socket
 import threading
-import time
 from typing import List
 from datetime import datetime
 
-from common.general_packet import GeneralPacket
+from syncalong.common.general_packet import GeneralPacket
 from syncalong.common.length_socket import LengthSocket, send_to_all
 from syncalong.common.signal_packet import *
 from syncalong.common.file_sync_packet import *

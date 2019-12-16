@@ -4,7 +4,7 @@ from typing import List
 
 from scapy.compat import raw
 
-from common.general_packet import GeneralPacket, generate_packet
+from syncalong.common.general_packet import GeneralPacket, generate_packet
 
 
 def int_to_bytes(x: int) -> bytes:

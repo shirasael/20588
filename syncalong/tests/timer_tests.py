@@ -1,6 +1,6 @@
 import pytest
 
-import client.timer
+import syncalong.client.timer
 import datetime
 
 REMOTE_TIME_DIFF = datetime.timedelta(seconds=10)
