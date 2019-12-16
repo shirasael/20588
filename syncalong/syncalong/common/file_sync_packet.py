@@ -1,4 +1,5 @@
 import os
+from typing import List
 
 from scapy.fields import IntEnumField, FieldLenField, StrField, IntField
 from scapy.packet import Packet
@@ -21,13 +22,13 @@ class FileSyncPacket(Packet):
     ]
 
 
-def who_has_packet(file_path):
+def who_has_packet(file_path: str) -> FileSyncPacket:
     return FileSyncPacket(message_type=WHO_HAS,
                           file_name=os.path.basename(file_path),
                           file_size=os.path.getsize(file_path))
 
 
-def who_has_answer_packet(file_path, file_size):
+def who_has_answer_packet(file_path: str, file_size: int) -> FileSyncPacket:
     response = HAVE
     if not os.path.exists(file_path) or os.path.getsize(file_path) != file_size:
         response = MISSING
@@ -35,7 +36,7 @@ def who_has_answer_packet(file_path, file_size):
     return FileSyncPacket(message_type=response)
 
 
-def send_file_packets(file_path):
+def send_file_packets(file_path: str) -> List[FileSyncPacket]:
     packets = [FileSyncPacket(message_type=FILE_SEND,
                               file_name=os.path.basename(file_path),
                               file_size=os.path.getsize(file_path))]
