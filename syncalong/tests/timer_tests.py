@@ -10,7 +10,7 @@ def stub_get_remote_time(*args, **kwargs):
     return datetime.datetime.now() - REMOTE_TIME_DIFF
 
 
-client.timer.get_remote_time = stub_get_remote_time
+syncalong.client.timer.get_remote_time = stub_get_remote_time
 
 
 @pytest.mark.parametrize("expected_actual_wait_range, server_send_secs",
