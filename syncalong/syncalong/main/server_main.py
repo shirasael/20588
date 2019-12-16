@@ -4,12 +4,13 @@ import wx
 import wx.lib.mixins.listctrl as listmix
 from mutagen.mp3 import MP3
 
+from syncalong.definitions import CODE_PATH
 from syncalong.server.music_server import MusicServer
 from syncalong.server.ntp_server import NTPServer
 
 from syncalong.gui.gui_general import HORIZONTAL, VERTICAL, PORT_VALID_CHARS, check_valid_data
 
-CONFIG_PATH = os.path.join('..', 'server', 'conf.json')
+CONFIG_PATH = str(CODE_PATH / 'server' / 'conf.json')
 CONF = None
 
 
