@@ -4,12 +4,12 @@ import wx
 import wx.lib.mixins.listctrl as listmix
 from mutagen.mp3 import MP3
 
-from server.music_server import MusicServer
-from server.ntp_server import NTPServer
+from syncalong.server.music_server import MusicServer
+from syncalong.server.ntp_server import NTPServer
 
-from gui_general import HORIZONTAL, VERTICAL, PORT_VALID_CHARS, check_valid_data
+from syncalong.gui.gui_general import HORIZONTAL, VERTICAL, PORT_VALID_CHARS, check_valid_data
 
-CONFIG_PATH = './server/conf.json'
+CONFIG_PATH = os.path.join('..', 'server', 'conf.json')
 CONF = None
 
 
@@ -78,7 +78,8 @@ class SettingsPanel(wx.Panel):
         self.Bind(wx.EVT_TEXT, self.on_set_port, self.server_port_text)
 
         self.songs_path = wx.StaticText(self, label="Local songs path", pos=(HORIZONTAL.TEXT, VERTICAL.THIRD_LINE))
-        self.songs_path_text = wx.TextCtrl(self, value=str(CONF["SongsPath"]), pos=(HORIZONTAL.TEXT_CTRL, VERTICAL.THIRD_LINE),
+        self.songs_path_text = wx.TextCtrl(self, value=str(CONF["SongsPath"]),
+                                           pos=(HORIZONTAL.TEXT_CTRL, VERTICAL.THIRD_LINE),
                                            size=(210, -1))
         self.Bind(wx.EVT_TEXT, self.on_set_path, self.songs_path_text)
 
@@ -209,7 +210,8 @@ class Mp3Panel(wx.Panel):
             song = self.list_ctrl.GetItem(0)
             self.music_s.serve_music_file(song.GetText())
             self.music_s.signal_play_all(song.GetText())
-            self.timer.StartOnce(MP3(song.GetText()).info.length * 1000)  # Timer works with milliseconds and MP3 works with Seconds
+            self.timer.StartOnce(
+                MP3(song.GetText()).info.length * 1000)  # Timer works with milliseconds and MP3 works with Seconds
             self.list_ctrl.DeleteItem(song.GetId())
         else:
             self.timer.StartOnce(1000)
@@ -229,7 +231,7 @@ class Mp3Frame(wx.Frame):
 
         notebook = wx.Notebook(panel)
 
-        settings_panel = SettingsPanel(notebook) # Setting need to be created before other pages
+        settings_panel = SettingsPanel(notebook)  # Setting need to be created before other pages
         self.mp3_panel = Mp3Panel(notebook)
 
         notebook.AddPage(self.mp3_panel, 'Main')

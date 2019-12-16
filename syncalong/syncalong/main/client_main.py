@@ -1,17 +1,18 @@
-import os
 import json
 import threading
 import wx.adv
 import wx
 
-from client.client import Client
-from gui_general import HORIZONTAL, VERTICAL, PORT_VALID_CHARS, check_valid_data
+from syncalong.client.client import Client
+from syncalong.gui.gui_general import HORIZONTAL, VERTICAL, PORT_VALID_CHARS, check_valid_data
+import os
 
 TRAY_TOOLTIP = 'Name'
-TRAY_ICON = './gui/icon.png'
-CONFIG_PATH = './client/conf.json'
+TRAY_ICON = os.path.join('..', 'gui', 'icon.png')
+CONFIG_PATH = os.path.join('..', 'client', 'conf.json')
 
 CONF = None
+
 
 class SettingsPanel(wx.Panel):
     def __init__(self, parent):
@@ -30,7 +31,8 @@ class SettingsPanel(wx.Panel):
         self.Bind(wx.EVT_TEXT, self.on_set_port, self.server_port_text)
 
         self.songs_path = wx.StaticText(self, label="Local songs path", pos=(HORIZONTAL.TEXT, VERTICAL.THIRD_LINE))
-        self.songs_path_text = wx.TextCtrl(self, value=str(CONF["SongsPath"]), pos=(HORIZONTAL.TEXT_CTRL, VERTICAL.THIRD_LINE),
+        self.songs_path_text = wx.TextCtrl(self, value=str(CONF["SongsPath"]),
+                                           pos=(HORIZONTAL.TEXT_CTRL, VERTICAL.THIRD_LINE),
                                            size=(210, -1))
         self.Bind(wx.EVT_TEXT, self.on_set_path, self.songs_path_text)
 
@@ -42,10 +44,10 @@ class SettingsPanel(wx.Panel):
 
     def on_set_port(self, event):
         data = check_valid_data(event.GetString(), PORT_VALID_CHARS)
-        if data and int(data) < 2**16 and int(data) > 0:
+        if data and int(data) < 2 ** 16 and int(data) > 0:
             CONF["ServerPort"] = int(data)
         else:
-            self.server_port_text.SetValue(f'Port should be between 0 to {2**16}')
+            self.server_port_text.SetValue(f'Port should be between 0 to {2 ** 16}')
 
     def on_set_path(self, event):
         CONF["SongsPath"] = event.GetString()
@@ -66,14 +68,14 @@ class SettingsPanel(wx.Panel):
             self.on_save(None)
 
 
-
 class Mp3Panel(wx.Panel):
     def __init__(self, parent):
         super().__init__(parent)
         main_sizer = wx.BoxSizer(wx.VERTICAL)
 
         song_name = wx.StaticText(self, label="Title")
-        self.plaing_song = wx.TextCtrl(self, value="", size=(-1,100), style=wx.LC_REPORT | wx.BORDER_SUNKEN | wx.TE_READONLY)
+        self.plaing_song = wx.TextCtrl(self, value="", size=(-1, 100),
+                                       style=wx.LC_REPORT | wx.BORDER_SUNKEN | wx.TE_READONLY)
         main_sizer.Add(song_name, 0, wx.ALL | wx.EXPAND, 5)
         main_sizer.Add(self.plaing_song, 0, wx.ALL | wx.EXPAND, 5)
 
@@ -128,13 +130,13 @@ class Mp3Panel(wx.Panel):
 
 class Mp3Frame(wx.Frame):
     def __init__(self):
-        super().__init__(parent=None, title='SyncAlong', size=(400,250))
+        super().__init__(parent=None, title='SyncAlong', size=(400, 250))
         # self.panel = Mp3Panel(self)
         panel = wx.Panel(self)
 
         notebook = wx.Notebook(panel)
 
-        settings_panel = SettingsPanel(notebook) # Setting need to be created before other pages
+        settings_panel = SettingsPanel(notebook)  # Setting need to be created before other pages
         self.mp3_panel = Mp3Panel(notebook)
 
         notebook.AddPage(self.mp3_panel, 'Main')

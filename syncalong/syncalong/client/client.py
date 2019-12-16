@@ -14,6 +14,7 @@ from syncalong.common.signal_packet import PLAY_SIGNAL, STOP_SIGNAL, SignalPacke
 
 TIMEOUT = 0.5
 
+
 class UnknownSignalException(Exception):
     def __init__(self, signal):
         self.signal = signal
@@ -30,6 +31,7 @@ class Client(object):
     The client synchronizes with a remote NTP server, in order to guarantee music will be played at the same time for
     all clients at once.
     """
+
     def __init__(self, server_ip, server_port, ntp_server, music_files_repo):
         """
         Initialize a new client by connecting to the server at the given address.
@@ -43,7 +45,7 @@ class Client(object):
         self.ntp_server = ntp_server
         self.music_files_repo = music_files_repo
         if not os.path.exists(self.music_files_repo):
-            os.makedirs(self.music_files_repo) 
+            os.makedirs(self.music_files_repo)
         self.socket = LengthSocket(socket.AF_INET, socket.SOCK_STREAM)
         print(f'connecting to {server_ip}:{server_port}')
         self.socket.connect((server_ip, server_port))
@@ -60,7 +62,7 @@ class Client(object):
         """
         self.socket.send(bytes("hello", encoding="utf-8"))
         while not self.stop_request.is_set():
-            sock , _ , _  = select.select([self.socket], [], [], TIMEOUT)
+            sock, _, _ = select.select([self.socket], [], [], TIMEOUT)
             if sock:
                 recv_packet = GeneralPacket(sock[0].recv())
                 handle_packet(recv_packet, {
@@ -79,7 +81,6 @@ class Client(object):
         pygame.mixer.music.load(music_file_path)
         self.plaing_now = os.path.basename(music_file_path)
         pygame.mixer.music.play()
-
 
     def _handle_signal(self, signal_packet: SignalPacket):
         """
