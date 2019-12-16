@@ -5,7 +5,7 @@ import pygame
 import threading
 import select
 
-from common.general_packet import GeneralPacket, handle_packet
+from syncalong.common.general_packet import GeneralPacket, handle_packet
 from syncalong.client.timer import wait_for_remote_time
 
 from syncalong.common.length_socket import LengthSocket
