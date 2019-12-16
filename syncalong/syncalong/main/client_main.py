@@ -3,13 +3,14 @@ import threading
 import wx.adv
 import wx
 
+from syncalong.definitions import CODE_PATH
 from syncalong.client.client import Client
 from syncalong.gui.gui_general import HORIZONTAL, VERTICAL, PORT_VALID_CHARS, check_valid_data
 import os
 
 TRAY_TOOLTIP = 'Name'
-TRAY_ICON = os.path.join('..', 'gui', 'icon.png')
-CONFIG_PATH = os.path.join('..', 'client', 'conf.json')
+TRAY_ICON = str(CODE_PATH / 'gui' / 'icon.png')
+CONFIG_PATH = str(CODE_PATH / 'client' / 'conf.json')
 
 CONF = None
 
