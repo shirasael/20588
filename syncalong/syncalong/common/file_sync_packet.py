@@ -35,10 +35,11 @@ def who_has_answer_packet(file_path, file_size):
     return FileSyncPacket(message_type=response)
 
 
-def send_file_packet(file_path):
-    yield FileSyncPacket(message_type=FILE_SEND,
-                         file_name=os.path.basename(file_path),
-                         file_size=os.path.getsize(file_path))
+def send_file_packets(file_path):
+    packets = [FileSyncPacket(message_type=FILE_SEND,
+                              file_name=os.path.basename(file_path),
+                              file_size=os.path.getsize(file_path))]
     with open(file_path, 'rb') as file_to_send:
         data = file_to_send.read()
-        return data
+        packets.append(data)
+    return packets

@@ -144,7 +144,7 @@ class MusicServer(object):
         """
         print(f"Sending file {local_file_path}")
         missing_clients = self._query_file_existence(local_file_path)
-        send_to_all(missing_clients, send_file_packet(local_file_path))
+        send_to_all(missing_clients, send_file_packets(local_file_path))
 
     def _query_file_existence(self, local_file_path: str) -> List[LengthSocket]:
         """
